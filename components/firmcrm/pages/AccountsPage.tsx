@@ -77,7 +77,7 @@ export default function AccountsPage() {
         <DataTable rows={accounts.data?.items} columns={cols} loading={accounts.isLoading} twoLine onRowClick={(a) => nav(`/accounts/${a.id}`)} sort={sorting.sort} onSortChange={sorting.onSortChange} empty={empty} />
         <Pagination total={accounts.data?.total} limit={pager.limit} offset={pager.offset} onOffset={pager.setOffset} onLimit={pager.setLimit} />
       </div>
-      <FormModal open={creating} onClose={() => { if (keepOpen.current) { keepOpen.current = false; return; } setCreating(false); }} title="New account" fields={fields} initial={{ account_type: "prospect", entity_kind: "company", country: "US", tags: [] }} submitLabel="Create"
+      <FormModal open={creating} onClose={() => { if (keepOpen.current) { keepOpen.current = false; return; } setCreating(false); }} title="New account" fields={fields} initial={{ account_type: "prospect", entity_kind: "company", country: "United States", tags: [] }} submitLabel="Create"
         onSubmit={async (v) => {
           let a: Account;
           try { a = await accountsApi.create(v as Partial<Account>); }

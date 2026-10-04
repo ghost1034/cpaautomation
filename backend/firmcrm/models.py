@@ -118,7 +118,7 @@ class FirmCrmAccount(Base, FirmMixin, TimestampMixin, ArchiveMixin):
     city: Mapped[str | None] = mapped_column(String(80))
     state: Mapped[str | None] = mapped_column(String(40))
     postal_code: Mapped[str | None] = mapped_column(String(20))
-    country: Mapped[str] = mapped_column(String(40), default="US")
+    country: Mapped[str] = mapped_column(String(40), default="United States")
     revenue_band: Mapped[str | None] = mapped_column(String(40))
     employee_band: Mapped[str | None] = mapped_column(String(40))
     owner_id: Mapped[str | None] = mapped_column(String(128), ForeignKey("users.id", ondelete="SET NULL"))  # relationship partner

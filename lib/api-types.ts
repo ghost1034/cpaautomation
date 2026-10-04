@@ -15165,7 +15165,7 @@ export interface components {
             postal_code?: string | null;
             /**
              * Country
-             * @default US
+             * @default United States
              */
             country: string;
             /** Revenue Band */
@@ -15233,7 +15233,7 @@ export interface components {
             postal_code?: string | null;
             /**
              * Country
-             * @default US
+             * @default United States
              */
             country: string;
             /** Revenue Band */

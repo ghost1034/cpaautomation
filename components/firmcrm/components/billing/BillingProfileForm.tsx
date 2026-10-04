@@ -8,7 +8,7 @@ import { SAMPLE_VALUES } from "./templatePlaceholders";
 
 const HEX = /^#[0-9a-f]{6}$/i;
 const NEW_PROFILE: FormValues = {
-  accent_color: "#1683DB", country: "US", default_terms_days: 30, default_terms_text: "Please pay invoice by {due_date}",
+  accent_color: "#1683DB", country: "United States", default_terms_days: 30, default_terms_text: "Please pay invoice by {due_date}",
   email_subject_template: "Invoice {invoice_number} from {issuer_name}",
   email_message_template: "Hello,\n\nPlease find invoice {invoice_number} for {total} attached, due {due_date}.\n\nThank you,\n{issuer_name}",
 };

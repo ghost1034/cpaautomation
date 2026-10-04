@@ -125,7 +125,7 @@ class FirmCrmAccountBase(BaseModel):
     city: Annotated[str, Field(max_length=80)] | None = None
     state: Annotated[str, Field(max_length=40)] | None = None
     postal_code: Annotated[str, Field(max_length=20)] | None = None
-    country: Annotated[str, Field(max_length=40)] = "US"
+    country: Annotated[str, Field(max_length=40)] = "United States"
     revenue_band: Annotated[str, Field(max_length=40)] | None = None
     employee_band: Annotated[str, Field(max_length=40)] | None = None
     owner_id: str | None = None

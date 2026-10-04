@@ -57825,7 +57825,7 @@
             "type": "string",
             "maxLength": 40,
             "title": "Country",
-            "default": "US"
+            "default": "United States"
           },
           "revenue_band": {
             "anyOf": [
@@ -58094,7 +58094,7 @@
             "type": "string",
             "maxLength": 40,
             "title": "Country",
-            "default": "US"
+            "default": "United States"
           },
           "revenue_band": {
             "anyOf": [
