@@ -21,7 +21,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 
 /* ------------------------------------------------------------------- Inputs */
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input(p, ref) {
-  return <input ref={ref} {...p} className={cn("field", p.type === "number" && "text-right num", p.className)} />;
+  return <input ref={ref} {...p} className={cn("field", p.type === "number" && "num", p.className)} />;
 });
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(function Textarea(p, ref) {
   return <textarea ref={ref} {...p} className={cn("field", p.className)} />;

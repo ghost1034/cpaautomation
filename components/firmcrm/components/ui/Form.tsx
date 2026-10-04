@@ -116,7 +116,7 @@ export function MoneyInput({ value, onValueChange, className, onBlur, onFocus, .
   return (
     <span className="relative block">
       <span className="field-prefix" aria-hidden>{settings.default_currency}</span>
-      <Input {...p} type="text" inputMode="decimal" autoComplete="off" value={text} className={cn("!pl-12 text-right num", className)}
+      <Input {...p} type="text" inputMode="decimal" autoComplete="off" value={text} className={cn("!pl-12 num", className)}
              onFocus={(e) => { setEditing(true); setText(value == null ? "" : String(value)); onFocus?.(e); }}
              onChange={(e) => { setText(e.target.value); const n = parseMoney(e.target.value); last.current = n; onValueChange(n); }}
              onBlur={(e) => { setEditing(false); setText(value == null ? "" : moneyFmt.format(value)); onBlur?.(e); }} />

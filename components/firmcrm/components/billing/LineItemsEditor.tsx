@@ -32,8 +32,8 @@ export function LineItemsEditor({ lines, onChange, currency, readOnly, showError
           <thead>
             <tr className="border-b border-crm-sand-150 text-left text-[12px] text-crm-sand-600">
               <th className="py-2 pr-2 font-medium">Description</th>
-              <th className="w-[140px] py-2 pr-2 text-right font-medium">Unit cost</th>
-              <th className="w-[96px] py-2 pr-2 text-right font-medium">Qty / hours</th>
+              <th className={cn("w-[140px] py-2 pr-2 font-medium", readOnly && "text-right")}>Unit cost</th>
+              <th className={cn("w-[96px] py-2 pr-2 font-medium", readOnly && "text-right")}>Qty / hours</th>
               <th className="w-[128px] py-2 pr-2 text-right font-medium">Amount</th>
               {!readOnly && <th className="w-[92px]" aria-label="Row actions" />}
             </tr>
@@ -51,8 +51,8 @@ export function LineItemsEditor({ lines, onChange, currency, readOnly, showError
                            aria-invalid={errors[l.key] ? true : undefined} onChange={(e) => update(l.key, { description: e.target.value })} />
                     {errors[l.key] && <span className="mt-1 block text-[12px] text-crm-danger-600">{errors[l.key]}</span>}
                   </td>
-                  <td className="py-1.5 pr-2"><Input aria-label={`Line ${i + 1} unit cost`} inputMode="decimal" className="num text-right" value={l.unit_cost} placeholder="0.00" onChange={(e) => update(l.key, { unit_cost: e.target.value })} /></td>
-                  <td className="py-1.5 pr-2"><Input aria-label={`Line ${i + 1} quantity`} inputMode="decimal" className="num text-right" value={l.quantity} onChange={(e) => update(l.key, { quantity: e.target.value })} /></td>
+                  <td className="py-1.5 pr-2"><Input aria-label={`Line ${i + 1} unit cost`} inputMode="decimal" className="num" value={l.unit_cost} placeholder="0.00" onChange={(e) => update(l.key, { unit_cost: e.target.value })} /></td>
+                  <td className="py-1.5 pr-2"><Input aria-label={`Line ${i + 1} quantity`} inputMode="decimal" className="num" value={l.quantity} onChange={(e) => update(l.key, { quantity: e.target.value })} /></td>
                 </>}
                 <td className={cn("num py-2 pr-2 text-right", readOnly ? "" : "pt-3")}>{amount(l)}</td>
                 {!readOnly && (
