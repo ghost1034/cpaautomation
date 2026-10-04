@@ -116,8 +116,14 @@ class _Renderer:
 
     def table_header(self, top: float):
         self.rect(TABLE_X0, top, TABLE_X1, 14, self.accent)
-        for x, label in [(TABLE_X0 + 3, "DESCRIPTION"), (COL_UNIT, "UNIT COST"), (COL_QTY, "QTY/HR RATE"), (COL_AMOUNT, "AMOUNT")]:
-            self.text(x, top + 10, label, 7, colors.white, bold=True)
+        # Header anchors match the row values so money headers sit right-aligned over their amounts.
+        for x, label, align in [
+            (TABLE_X0 + 3, "DESCRIPTION", "left"),
+            (COL_QTY - 6, "UNIT COST", "right"),
+            (COL_QTY, "QTY/HR RATE", "left"),
+            (TABLE_X1 - 3, "AMOUNT", "right"),
+        ]:
+            self.text(x, top + 10, label, 7, colors.white, bold=True, align=align)
         return top + 19
 
     # -- sections
