@@ -591,7 +591,7 @@ API_SERVICE="cpa-api"
 WEB_SERVICE="cpa-web"
 QUEUE_NAME="inkwise-ingest"
 TASK_TOKEN_SECRET="INKWISE_TASKS_TOKEN"
-MIGRATION_JOB_NAME="cpa-inkwise-migrate"
+MIGRATION_JOB_NAME="cpa-migrate"
 API_MIN_INSTANCES=1
 WEB_MIN_INSTANCES=1
 if [ "$ENVIRONMENT" = "staging" ]; then
@@ -599,7 +599,7 @@ if [ "$ENVIRONMENT" = "staging" ]; then
   WEB_SERVICE="cpa-web-staging"
   QUEUE_NAME="inkwise-ingest-staging"
   TASK_TOKEN_SECRET="INKWISE_TASKS_TOKEN_STAGING"
-  MIGRATION_JOB_NAME="cpa-inkwise-migrate-staging"
+  MIGRATION_JOB_NAME="cpa-migrate-staging"
   API_MIN_INSTANCES=0
   WEB_MIN_INSTANCES=0
 fi

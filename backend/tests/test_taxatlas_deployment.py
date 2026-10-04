@@ -296,10 +296,10 @@ def test_opted_in_deploy_includes_jobs_after_migration(
     jobs = [(i, c) for i, c in enumerate(calls) if c[1:4] == ["run", "jobs", "deploy"]]
     assert len(jobs) == 7
     if not skip_migrate:
-        migration = next(i for i, c in enumerate(calls) if c[1:5] == ["run", "jobs", "execute", "cpa-inkwise-migrate"])
+        migration = next(i for i, c in enumerate(calls) if c[1:5] == ["run", "jobs", "execute", "cpa-migrate"])
         assert all(i > migration for i, _ in jobs)
     else:
-        assert not any("cpa-inkwise-migrate" in c for c in calls)
+        assert not any("cpa-migrate" in c for c in calls)
     browser = next(c for _, c in jobs if c[4] == "taxatlas-crawl-browser")
     assert "--image=us-central1-docker.pkg.dev/test-project/cpa-docker/taxatlas-browser:release-test" in browser
     builds = [c for c in calls if c[:3] == ["docker", "buildx", "build"]]
