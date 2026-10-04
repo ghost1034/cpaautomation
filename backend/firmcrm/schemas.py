@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from typing import Literal, Annotated, Any, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_serializer
@@ -21,6 +22,7 @@ from firmcrm.enums import (
     EngagementStatus,
     EntityKind,
     FeeType,
+    InvoiceStatus,
     LeadSource,
     LeadStatus,
     Lifecycle,
@@ -122,6 +124,7 @@ class FirmCrmAccountBase(BaseModel):
     address: Annotated[str, Field(max_length=255)] | None = None
     city: Annotated[str, Field(max_length=80)] | None = None
     state: Annotated[str, Field(max_length=40)] | None = None
+    postal_code: Annotated[str, Field(max_length=20)] | None = None
     country: Annotated[str, Field(max_length=40)] = "US"
     revenue_band: Annotated[str, Field(max_length=40)] | None = None
     employee_band: Annotated[str, Field(max_length=40)] | None = None
@@ -152,6 +155,7 @@ class FirmCrmAccountUpdate(BaseModel):
     address: Annotated[str, Field(max_length=255)] | None = None
     city: Annotated[str, Field(max_length=80)] | None = None
     state: Annotated[str, Field(max_length=40)] | None = None
+    postal_code: Annotated[str, Field(max_length=20)] | None = None
     country: Annotated[str, Field(max_length=40)] | None = None
     revenue_band: Annotated[str, Field(max_length=40)] | None = None
     employee_band: Annotated[str, Field(max_length=40)] | None = None
@@ -601,3 +605,178 @@ class FirmCrmAuditOut(FirmCrmORM):
     after_json: str | None
     note: str | None
     actor_name: str | None = None
+
+
+# ---- billing
+Hex = Annotated[str, Field(pattern=r"^#[0-9A-Fa-f]{6}$")]
+Money = Annotated[Decimal, Field(ge=0, le=Decimal("999999999999.99"), max_digits=14, decimal_places=2)]
+Qty = Annotated[Decimal, Field(gt=0, le=Decimal("9999999999.99"), max_digits=12, decimal_places=2)]
+
+
+class FirmCrmBillingProfileBase(BaseModel):
+    label: Annotated[str, Field(min_length=1, max_length=120)]
+    is_default: bool = False
+    issuer_name: Annotated[str, Field(min_length=1, max_length=200)]
+    address_line1: S | None = None
+    address_line2: S | None = None
+    city: Annotated[str, Field(max_length=80)] | None = None
+    state: Annotated[str, Field(max_length=40)] | None = None
+    postal_code: Annotated[str, Field(max_length=20)] | None = None
+    country: Annotated[str, Field(max_length=40)] | None = None
+    phone: Annotated[str, Field(max_length=40)] | None = None
+    email: EmailStr | None = None
+    website: Annotated[str, Field(max_length=255)] | None = None
+    accent_color: Hex = "#1683DB"
+    bank_name: S | None = None
+    account_name: S | None = None
+    routing_number: Annotated[str, Field(max_length=40)] | None = None
+    swift_code: Annotated[str, Field(max_length=20)] | None = None
+    default_terms_days: Annotated[int, Field(ge=0, le=365)] = 30
+    default_terms_text: M = "Please pay invoice by {due_date}"
+    email_subject_template: Annotated[str, Field(min_length=1, max_length=300)] = "Invoice {invoice_number} from {issuer_name}"
+    email_message_template: L = "Hello,\n\nPlease find invoice {invoice_number} for {total} attached, due {due_date}.\n\nThank you,\n{issuer_name}"
+    footer_note: L | None = None
+
+
+class FirmCrmBillingProfileCreate(FirmCrmBillingProfileBase):
+    account_number: Annotated[str, Field(max_length=40)] | None = None  # write-only; stored encrypted
+
+
+class FirmCrmBillingProfileUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    label: Annotated[str, Field(min_length=1, max_length=120)] | None = None
+    is_default: bool | None = None
+    issuer_name: Annotated[str, Field(min_length=1, max_length=200)] | None = None
+    address_line1: S | None = None
+    address_line2: S | None = None
+    city: Annotated[str, Field(max_length=80)] | None = None
+    state: Annotated[str, Field(max_length=40)] | None = None
+    postal_code: Annotated[str, Field(max_length=20)] | None = None
+    country: Annotated[str, Field(max_length=40)] | None = None
+    phone: Annotated[str, Field(max_length=40)] | None = None
+    email: EmailStr | None = None
+    website: Annotated[str, Field(max_length=255)] | None = None
+    accent_color: Hex | None = None
+    bank_name: S | None = None
+    account_name: S | None = None
+    routing_number: Annotated[str, Field(max_length=40)] | None = None
+    swift_code: Annotated[str, Field(max_length=20)] | None = None
+    account_number: Annotated[str, Field(max_length=40)] | None = None
+    default_terms_days: Annotated[int, Field(ge=0, le=365)] | None = None
+    default_terms_text: M | None = None
+    email_subject_template: Annotated[str, Field(min_length=1, max_length=300)] | None = None
+    email_message_template: L | None = None
+    footer_note: L | None = None
+
+
+class FirmCrmBillingProfileOut(FirmCrmBillingProfileBase, FirmCrmORM):
+    id: int
+    email: str | None = None
+    account_number_last4: str | None = None
+    is_archived: bool = False
+    created_at: datetime
+    updated_at: datetime
+
+
+class FirmCrmInvoiceLineIn(BaseModel):
+    description: Annotated[str, Field(min_length=1, max_length=500)]
+    unit_cost: Money
+    quantity: Qty = Decimal("1")
+
+
+class FirmCrmInvoiceLineOut(FirmCrmORM):
+    id: int
+    position: int
+    description: str
+    unit_cost: Decimal
+    quantity: Decimal
+    amount: Decimal
+
+
+class FirmCrmInvoiceCreate(BaseModel):
+    billing_profile_id: int
+    account_id: int | None = None
+    engagement_id: int | None = None
+    billed_to_name: Annotated[str, Field(min_length=1, max_length=200)]
+    billed_to_address: Annotated[str, Field(max_length=1000)] | None = None
+    billed_to_email: EmailStr | None = None
+    billed_to_cc: M | None = None
+    issue_date: date | None = None
+    due_date: date | None = None
+    terms_text: M | None = None
+    currency: Annotated[str, Field(min_length=3, max_length=3)] = "USD"
+    notes: L | None = None
+    lines: list[FirmCrmInvoiceLineIn] = Field(default_factory=list, max_length=200)
+
+
+class FirmCrmInvoiceUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    billing_profile_id: int | None = None
+    account_id: int | None = None
+    engagement_id: int | None = None
+    billed_to_name: Annotated[str, Field(min_length=1, max_length=200)] | None = None
+    billed_to_address: Annotated[str, Field(max_length=1000)] | None = None
+    billed_to_email: EmailStr | None = None
+    billed_to_cc: M | None = None
+    issue_date: date | None = None
+    due_date: date | None = None
+    terms_text: M | None = None
+    currency: Annotated[str, Field(min_length=3, max_length=3)] | None = None
+    notes: L | None = None
+    lines: list[FirmCrmInvoiceLineIn] | None = Field(default=None, max_length=200)
+
+
+class FirmCrmInvoiceDeliveryOut(FirmCrmORM):
+    id: int
+    to_email: str
+    cc: str | None = None
+    subject: str
+    status: str
+    error: str | None = None
+    sent_by_id: str | None = None
+    created_at: datetime
+
+
+class FirmCrmInvoiceOut(FirmCrmORM):
+    id: int
+    number: str | None = None
+    status: InvoiceStatus
+    billing_profile_id: int
+    account_id: int | None = None
+    engagement_id: int | None = None
+    billed_to_name: str
+    billed_to_address: str | None = None
+    billed_to_email: str | None = None
+    billed_to_cc: str | None = None
+    issue_date: date | None = None
+    due_date: date | None = None
+    terms_text: str | None = None
+    currency: str
+    subtotal: Decimal
+    total: Decimal
+    notes: str | None = None
+    issued_at: datetime | None = None
+    sent_at: datetime | None = None
+    paid_at: datetime | None = None
+    voided_at: datetime | None = None
+    void_reason: str | None = None
+    created_by_id: str | None = None
+    issuer_snapshot: dict[str, Any] | None = None  # issuer details frozen at issue; never includes the account number
+    created_at: datetime
+    updated_at: datetime
+    account_name: str | None = None
+    engagement_name: str | None = None
+    billing_profile_label: str | None = None
+    lines: list[FirmCrmInvoiceLineOut] = Field(default_factory=list)
+    deliveries: list[FirmCrmInvoiceDeliveryOut] = Field(default_factory=list)
+
+
+class FirmCrmInvoicePrefillOut(BaseModel):
+    account_id: int
+    billed_to_name: str
+    billed_to_address: str | None = None
+    billed_to_email: str | None = None
+
+
+class FirmCrmInvoiceVoidIn(BaseModel):
+    reason: M | None = None

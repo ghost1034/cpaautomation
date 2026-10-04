@@ -5,22 +5,20 @@ from __future__ import annotations
 import html
 import hashlib
 import io
-import os
 import re
 from collections import OrderedDict
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 from functools import partial
 from typing import Any
 
-import reportlab
+from services.pdf_common import money, register_vera_fonts
+
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4, LETTER
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from reportlab.platypus import (
     BaseDocTemplate,
@@ -59,7 +57,7 @@ def _text(value: Any, limit: int) -> str:
 
 
 def _money(value: Any) -> Decimal:
-    return Decimal(str(value or 0)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    return money(value)
 
 
 def _amount(value: Any, currency: str) -> str:
@@ -193,13 +191,7 @@ def build_document_snapshot(
 
 
 def _font_names() -> tuple[str, str]:
-    regular_name, bold_name = "TasklyticVera", "TasklyticVeraBold"
-    # TTFont instances retain per-document subset state. Re-register fresh
-    # instances so the output never depends on a previously rendered invoice.
-    font_dir = os.path.join(os.path.dirname(reportlab.__file__), "fonts")
-    pdfmetrics.registerFont(TTFont(regular_name, os.path.join(font_dir, "Vera.ttf")))
-    pdfmetrics.registerFont(TTFont(bold_name, os.path.join(font_dir, "VeraBd.ttf")))
-    return regular_name, bold_name
+    return register_vera_fonts("TasklyticVera", "TasklyticVeraBold")
 
 
 def _paragraph(value: Any, style: ParagraphStyle) -> Paragraph:

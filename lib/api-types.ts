@@ -10370,6 +10370,197 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/firmcrm/billing/profiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Profiles */
+        get: operations["list_profiles_api_firmcrm_billing_profiles_get"];
+        put?: never;
+        /** Create Profile */
+        post: operations["create_profile_api_firmcrm_billing_profiles_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/firmcrm/billing/profiles/{profile_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Profile */
+        patch: operations["update_profile_api_firmcrm_billing_profiles__profile_id__patch"];
+        trace?: never;
+    };
+    "/api/firmcrm/billing/profiles/{profile_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive Profile */
+        post: operations["archive_profile_api_firmcrm_billing_profiles__profile_id__archive_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/firmcrm/billing/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Invoices */
+        get: operations["list_invoices_api_firmcrm_billing_invoices_get"];
+        put?: never;
+        /** Create Invoice */
+        post: operations["create_invoice_api_firmcrm_billing_invoices_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/firmcrm/billing/invoices/prefill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Prefill Invoice */
+        get: operations["prefill_invoice_api_firmcrm_billing_invoices_prefill_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/firmcrm/billing/invoices/{invoice_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Invoice */
+        get: operations["get_invoice_api_firmcrm_billing_invoices__invoice_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Invoice */
+        delete: operations["delete_invoice_api_firmcrm_billing_invoices__invoice_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Invoice */
+        patch: operations["update_invoice_api_firmcrm_billing_invoices__invoice_id__patch"];
+        trace?: never;
+    };
+    "/api/firmcrm/billing/invoices/{invoice_id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Invoice Pdf */
+        get: operations["download_invoice_pdf_api_firmcrm_billing_invoices__invoice_id__pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/firmcrm/billing/invoices/{invoice_id}/issue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Issue Invoice */
+        post: operations["issue_invoice_api_firmcrm_billing_invoices__invoice_id__issue_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/firmcrm/billing/invoices/{invoice_id}/mark-paid": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark Invoice Paid */
+        post: operations["mark_invoice_paid_api_firmcrm_billing_invoices__invoice_id__mark_paid_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/firmcrm/billing/invoices/{invoice_id}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Void Invoice */
+        post: operations["void_invoice_api_firmcrm_billing_invoices__invoice_id__void_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/firmcrm/billing/invoices/{invoice_id}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Duplicate Invoice */
+        post: operations["duplicate_invoice_api_firmcrm_billing_invoices__invoice_id__duplicate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/firmcrm/context": {
         parameters: {
             query?: never;
@@ -14953,6 +15144,8 @@ export interface components {
             city?: string | null;
             /** State */
             state?: string | null;
+            /** Postal Code */
+            postal_code?: string | null;
             /**
              * Country
              * @default US
@@ -15019,6 +15212,8 @@ export interface components {
             city?: string | null;
             /** State */
             state?: string | null;
+            /** Postal Code */
+            postal_code?: string | null;
             /**
              * Country
              * @default US
@@ -15114,6 +15309,8 @@ export interface components {
             city?: string | null;
             /** State */
             state?: string | null;
+            /** Postal Code */
+            postal_code?: string | null;
             /** Country */
             country?: string | null;
             /** Revenue Band */
@@ -15262,6 +15459,216 @@ export interface components {
             note: string | null;
             /** Actor Name */
             actor_name?: string | null;
+        };
+        /** FirmCrmBillingProfileCreate */
+        FirmCrmBillingProfileCreate: {
+            /** Label */
+            label: string;
+            /**
+             * Is Default
+             * @default false
+             */
+            is_default: boolean;
+            /** Issuer Name */
+            issuer_name: string;
+            /** Address Line1 */
+            address_line1?: string | null;
+            /** Address Line2 */
+            address_line2?: string | null;
+            /** City */
+            city?: string | null;
+            /** State */
+            state?: string | null;
+            /** Postal Code */
+            postal_code?: string | null;
+            /** Country */
+            country?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Website */
+            website?: string | null;
+            /**
+             * Accent Color
+             * @default #1683DB
+             */
+            accent_color: string;
+            /** Bank Name */
+            bank_name?: string | null;
+            /** Account Name */
+            account_name?: string | null;
+            /** Routing Number */
+            routing_number?: string | null;
+            /** Swift Code */
+            swift_code?: string | null;
+            /**
+             * Default Terms Days
+             * @default 30
+             */
+            default_terms_days: number;
+            /**
+             * Default Terms Text
+             * @default Please pay invoice by {due_date}
+             */
+            default_terms_text: string;
+            /**
+             * Email Subject Template
+             * @default Invoice {invoice_number} from {issuer_name}
+             */
+            email_subject_template: string;
+            /**
+             * Email Message Template
+             * @default Hello,
+             *
+             *     Please find invoice {invoice_number} for {total} attached, due {due_date}.
+             *
+             *     Thank you,
+             *     {issuer_name}
+             */
+            email_message_template: string;
+            /** Footer Note */
+            footer_note?: string | null;
+            /** Account Number */
+            account_number?: string | null;
+        };
+        /** FirmCrmBillingProfileOut */
+        FirmCrmBillingProfileOut: {
+            /** Label */
+            label: string;
+            /**
+             * Is Default
+             * @default false
+             */
+            is_default: boolean;
+            /** Issuer Name */
+            issuer_name: string;
+            /** Address Line1 */
+            address_line1?: string | null;
+            /** Address Line2 */
+            address_line2?: string | null;
+            /** City */
+            city?: string | null;
+            /** State */
+            state?: string | null;
+            /** Postal Code */
+            postal_code?: string | null;
+            /** Country */
+            country?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Website */
+            website?: string | null;
+            /**
+             * Accent Color
+             * @default #1683DB
+             */
+            accent_color: string;
+            /** Bank Name */
+            bank_name?: string | null;
+            /** Account Name */
+            account_name?: string | null;
+            /** Routing Number */
+            routing_number?: string | null;
+            /** Swift Code */
+            swift_code?: string | null;
+            /**
+             * Default Terms Days
+             * @default 30
+             */
+            default_terms_days: number;
+            /**
+             * Default Terms Text
+             * @default Please pay invoice by {due_date}
+             */
+            default_terms_text: string;
+            /**
+             * Email Subject Template
+             * @default Invoice {invoice_number} from {issuer_name}
+             */
+            email_subject_template: string;
+            /**
+             * Email Message Template
+             * @default Hello,
+             *
+             *     Please find invoice {invoice_number} for {total} attached, due {due_date}.
+             *
+             *     Thank you,
+             *     {issuer_name}
+             */
+            email_message_template: string;
+            /** Footer Note */
+            footer_note?: string | null;
+            /** Id */
+            id: number;
+            /** Account Number Last4 */
+            account_number_last4?: string | null;
+            /**
+             * Is Archived
+             * @default false
+             */
+            is_archived: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** FirmCrmBillingProfileUpdate */
+        FirmCrmBillingProfileUpdate: {
+            /** Label */
+            label?: string | null;
+            /** Is Default */
+            is_default?: boolean | null;
+            /** Issuer Name */
+            issuer_name?: string | null;
+            /** Address Line1 */
+            address_line1?: string | null;
+            /** Address Line2 */
+            address_line2?: string | null;
+            /** City */
+            city?: string | null;
+            /** State */
+            state?: string | null;
+            /** Postal Code */
+            postal_code?: string | null;
+            /** Country */
+            country?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Website */
+            website?: string | null;
+            /** Accent Color */
+            accent_color?: string | null;
+            /** Bank Name */
+            bank_name?: string | null;
+            /** Account Name */
+            account_name?: string | null;
+            /** Routing Number */
+            routing_number?: string | null;
+            /** Swift Code */
+            swift_code?: string | null;
+            /** Account Number */
+            account_number?: string | null;
+            /** Default Terms Days */
+            default_terms_days?: number | null;
+            /** Default Terms Text */
+            default_terms_text?: string | null;
+            /** Email Subject Template */
+            email_subject_template?: string | null;
+            /** Email Message Template */
+            email_message_template?: string | null;
+            /** Footer Note */
+            footer_note?: string | null;
         };
         /** FirmCrmCampaignCreate */
         FirmCrmCampaignCreate: {
@@ -15898,6 +16305,208 @@ export interface components {
             /** Created At */
             created_at: string;
         };
+        /** FirmCrmInvoiceCreate */
+        FirmCrmInvoiceCreate: {
+            /** Billing Profile Id */
+            billing_profile_id: number;
+            /** Account Id */
+            account_id?: number | null;
+            /** Engagement Id */
+            engagement_id?: number | null;
+            /** Billed To Name */
+            billed_to_name: string;
+            /** Billed To Address */
+            billed_to_address?: string | null;
+            /** Billed To Email */
+            billed_to_email?: string | null;
+            /** Billed To Cc */
+            billed_to_cc?: string | null;
+            /** Issue Date */
+            issue_date?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Terms Text */
+            terms_text?: string | null;
+            /**
+             * Currency
+             * @default USD
+             */
+            currency: string;
+            /** Notes */
+            notes?: string | null;
+            /** Lines */
+            lines?: components["schemas"]["FirmCrmInvoiceLineIn"][];
+        };
+        /** FirmCrmInvoiceDeliveryOut */
+        FirmCrmInvoiceDeliveryOut: {
+            /** Id */
+            id: number;
+            /** To Email */
+            to_email: string;
+            /** Cc */
+            cc?: string | null;
+            /** Subject */
+            subject: string;
+            /** Status */
+            status: string;
+            /** Error */
+            error?: string | null;
+            /** Sent By Id */
+            sent_by_id?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** FirmCrmInvoiceLineIn */
+        FirmCrmInvoiceLineIn: {
+            /** Description */
+            description: string;
+            /** Unit Cost */
+            unit_cost: number | string;
+            /**
+             * Quantity
+             * @default 1
+             */
+            quantity: number | string;
+        };
+        /** FirmCrmInvoiceLineOut */
+        FirmCrmInvoiceLineOut: {
+            /** Id */
+            id: number;
+            /** Position */
+            position: number;
+            /** Description */
+            description: string;
+            /** Unit Cost */
+            unit_cost: string;
+            /** Quantity */
+            quantity: string;
+            /** Amount */
+            amount: string;
+        };
+        /** FirmCrmInvoiceOut */
+        FirmCrmInvoiceOut: {
+            /** Id */
+            id: number;
+            /** Number */
+            number?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "issued" | "sent" | "paid" | "void";
+            /** Billing Profile Id */
+            billing_profile_id: number;
+            /** Account Id */
+            account_id?: number | null;
+            /** Engagement Id */
+            engagement_id?: number | null;
+            /** Billed To Name */
+            billed_to_name: string;
+            /** Billed To Address */
+            billed_to_address?: string | null;
+            /** Billed To Email */
+            billed_to_email?: string | null;
+            /** Billed To Cc */
+            billed_to_cc?: string | null;
+            /** Issue Date */
+            issue_date?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Terms Text */
+            terms_text?: string | null;
+            /** Currency */
+            currency: string;
+            /** Subtotal */
+            subtotal: string;
+            /** Total */
+            total: string;
+            /** Notes */
+            notes?: string | null;
+            /** Issued At */
+            issued_at?: string | null;
+            /** Sent At */
+            sent_at?: string | null;
+            /** Paid At */
+            paid_at?: string | null;
+            /** Voided At */
+            voided_at?: string | null;
+            /** Void Reason */
+            void_reason?: string | null;
+            /** Created By Id */
+            created_by_id?: string | null;
+            /** Issuer Snapshot */
+            issuer_snapshot?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Account Name */
+            account_name?: string | null;
+            /** Engagement Name */
+            engagement_name?: string | null;
+            /** Billing Profile Label */
+            billing_profile_label?: string | null;
+            /** Lines */
+            lines?: components["schemas"]["FirmCrmInvoiceLineOut"][];
+            /** Deliveries */
+            deliveries?: components["schemas"]["FirmCrmInvoiceDeliveryOut"][];
+        };
+        /** FirmCrmInvoicePrefillOut */
+        FirmCrmInvoicePrefillOut: {
+            /** Account Id */
+            account_id: number;
+            /** Billed To Name */
+            billed_to_name: string;
+            /** Billed To Address */
+            billed_to_address?: string | null;
+            /** Billed To Email */
+            billed_to_email?: string | null;
+        };
+        /** FirmCrmInvoiceUpdate */
+        FirmCrmInvoiceUpdate: {
+            /** Billing Profile Id */
+            billing_profile_id?: number | null;
+            /** Account Id */
+            account_id?: number | null;
+            /** Engagement Id */
+            engagement_id?: number | null;
+            /** Billed To Name */
+            billed_to_name?: string | null;
+            /** Billed To Address */
+            billed_to_address?: string | null;
+            /** Billed To Email */
+            billed_to_email?: string | null;
+            /** Billed To Cc */
+            billed_to_cc?: string | null;
+            /** Issue Date */
+            issue_date?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Terms Text */
+            terms_text?: string | null;
+            /** Currency */
+            currency?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Lines */
+            lines?: components["schemas"]["FirmCrmInvoiceLineIn"][] | null;
+        };
+        /** FirmCrmInvoiceVoidIn */
+        FirmCrmInvoiceVoidIn: {
+            /** Reason */
+            reason?: string | null;
+        };
         /** FirmCrmLeadConvertIn */
         FirmCrmLeadConvertIn: {
             /** Existing Account Id */
@@ -16428,6 +17037,17 @@ export interface components {
         FirmCrmPage_FirmCrmImportJobOut_: {
             /** Items */
             items: components["schemas"]["FirmCrmImportJobOut"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /** FirmCrmPage[FirmCrmInvoiceOut] */
+        FirmCrmPage_FirmCrmInvoiceOut_: {
+            /** Items */
+            items: components["schemas"]["FirmCrmInvoiceOut"][];
             /** Total */
             total: number;
             /** Limit */
@@ -46486,6 +47106,1031 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FirmCrmWallOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+        };
+    };
+    list_profiles_api_firmcrm_billing_profiles_get: {
+        parameters: {
+            query?: {
+                include_archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmBillingProfileOut"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+        };
+    };
+    create_profile_api_firmcrm_billing_profiles_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FirmCrmBillingProfileCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmBillingProfileOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+        };
+    };
+    update_profile_api_firmcrm_billing_profiles__profile_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FirmCrmBillingProfileUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmBillingProfileOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+        };
+    };
+    archive_profile_api_firmcrm_billing_profiles__profile_id__archive_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmBillingProfileOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+        };
+    };
+    list_invoices_api_firmcrm_billing_invoices_get: {
+        parameters: {
+            query?: {
+                status?: ("draft" | "issued" | "sent" | "paid" | "void") | null;
+                account_id?: number | null;
+                q?: string | null;
+                sort?: string | null;
+                dir?: "asc" | "desc";
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmPage_FirmCrmInvoiceOut_"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+        };
+    };
+    create_invoice_api_firmcrm_billing_invoices_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FirmCrmInvoiceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmInvoiceOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+        };
+    };
+    prefill_invoice_api_firmcrm_billing_invoices_prefill_get: {
+        parameters: {
+            query: {
+                account_id: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmInvoicePrefillOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+        };
+    };
+    get_invoice_api_firmcrm_billing_invoices__invoice_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmInvoiceOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+        };
+    };
+    delete_invoice_api_firmcrm_billing_invoices__invoice_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+        };
+    };
+    update_invoice_api_firmcrm_billing_invoices__invoice_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FirmCrmInvoiceUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmInvoiceOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+        };
+    };
+    download_invoice_pdf_api_firmcrm_billing_invoices__invoice_id__pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+        };
+    };
+    issue_invoice_api_firmcrm_billing_invoices__invoice_id__issue_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmInvoiceOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+        };
+    };
+    mark_invoice_paid_api_firmcrm_billing_invoices__invoice_id__mark_paid_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmInvoiceOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+        };
+    };
+    void_invoice_api_firmcrm_billing_invoices__invoice_id__void_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FirmCrmInvoiceVoidIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmInvoiceOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+        };
+    };
+    duplicate_invoice_api_firmcrm_billing_invoices__invoice_id__duplicate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invoice_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmInvoiceOut"];
                 };
             };
             /** @description Bad Request */

@@ -5,6 +5,7 @@ from firmcrm.api import (
     accounts,
     activities,
     admin,
+    billing,
     campaigns,
     conflicts,
     contacts,
@@ -20,7 +21,7 @@ from firmcrm.api import (
 
 api_router = APIRouter(route_class=FirmCrmRoute, )
 for r in (users, reference, accounts, contacts, leads, opportunities, activities, conflicts, engagements, campaigns,
-          reports, admin, data, walls):
+          reports, admin, data, walls, billing):
     api_router.include_router(r.router)
 
 from firmcrm.api import context, shared_clients
