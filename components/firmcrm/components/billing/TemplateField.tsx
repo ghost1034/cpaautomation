@@ -74,7 +74,7 @@ export function TemplateField({ label, value, onChange, values, multiline = fals
           <summary className="inline-flex cursor-pointer list-none items-center gap-0.5 text-[12px] font-medium leading-4 text-crm-sand-500 hover:text-crm-sand-700 [&::-webkit-details-marker]:hidden">
             <ChevronRight size={12} className="transition-transform duration-[120ms] group-open:rotate-90" />Preview
           </summary>
-          <p className={cn("mt-1 text-[12px] leading-4 text-crm-sand-600", multiline && "line-clamp-4 whitespace-pre-line")}>{preview}</p>
+          <p className={cn("mt-1 text-[12px] leading-4 text-crm-sand-600 break-words", multiline && "whitespace-pre-line")}>{preview}</p>
         </details>
       )}
     </div>
