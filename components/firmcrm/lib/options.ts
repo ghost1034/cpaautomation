@@ -26,3 +26,36 @@ export const INDEPENDENCE_QUESTIONS: { key: string; label: string }[] = [
   { key: "contingent_fees", label: "Any fee arrangement with the client is contingent" },
   { key: "business_relationship", label: "Firm or partners have a joint business relationship with the client" },
 ];
+
+/* Billing form dropdowns. Values are what the API stores; the PDF omits the country line for "US". */
+export const US_STATES: [string, string][] = [
+  ["AL", "Alabama"], ["AK", "Alaska"], ["AZ", "Arizona"], ["AR", "Arkansas"], ["CA", "California"], ["CO", "Colorado"], ["CT", "Connecticut"],
+  ["DE", "Delaware"], ["DC", "District of Columbia"], ["FL", "Florida"], ["GA", "Georgia"], ["HI", "Hawaii"], ["ID", "Idaho"], ["IL", "Illinois"],
+  ["IN", "Indiana"], ["IA", "Iowa"], ["KS", "Kansas"], ["KY", "Kentucky"], ["LA", "Louisiana"], ["ME", "Maine"], ["MD", "Maryland"],
+  ["MA", "Massachusetts"], ["MI", "Michigan"], ["MN", "Minnesota"], ["MS", "Mississippi"], ["MO", "Missouri"], ["MT", "Montana"], ["NE", "Nebraska"],
+  ["NV", "Nevada"], ["NH", "New Hampshire"], ["NJ", "New Jersey"], ["NM", "New Mexico"], ["NY", "New York"], ["NC", "North Carolina"],
+  ["ND", "North Dakota"], ["OH", "Ohio"], ["OK", "Oklahoma"], ["OR", "Oregon"], ["PA", "Pennsylvania"], ["RI", "Rhode Island"],
+  ["SC", "South Carolina"], ["SD", "South Dakota"], ["TN", "Tennessee"], ["TX", "Texas"], ["UT", "Utah"], ["VT", "Vermont"], ["VA", "Virginia"],
+  ["WA", "Washington"], ["WV", "West Virginia"], ["WI", "Wisconsin"], ["WY", "Wyoming"], ["AS", "American Samoa"], ["GU", "Guam"],
+  ["MP", "Northern Mariana Islands"], ["PR", "Puerto Rico"], ["VI", "U.S. Virgin Islands"],
+];
+/** "US" stays a code (existing default, hidden on the PDF); other countries store the name that prints on the invoice. */
+export const COUNTRIES: { value: string; label: string }[] = [
+  { value: "US", label: "United States" },
+  ...["Canada", "Mexico", "United Kingdom", "Ireland", "Australia", "New Zealand", "Germany", "France", "Netherlands", "Switzerland",
+    "Spain", "Italy", "India", "Singapore", "Hong Kong", "Japan", "Israel", "United Arab Emirates", "Brazil"].map((c) => ({ value: c, label: c })),
+];
+export const CURRENCIES: { value: string; label: string }[] = [
+  ["USD", "US dollar"], ["CAD", "Canadian dollar"], ["EUR", "Euro"], ["GBP", "British pound"], ["AUD", "Australian dollar"],
+  ["NZD", "New Zealand dollar"], ["CHF", "Swiss franc"], ["MXN", "Mexican peso"], ["INR", "Indian rupee"], ["SGD", "Singapore dollar"],
+  ["HKD", "Hong Kong dollar"], ["ILS", "Israeli shekel"], ["AED", "UAE dirham"],
+].map(([code, name]) => ({ value: code, label: `${code} — ${name}` }));
+export const PAYMENT_TERMS: { value: number; label: string }[] = [
+  { value: 0, label: "Due on receipt" }, ...[7, 10, 15, 30, 45, 60, 90].map((d) => ({ value: d, label: `Net ${d} (${d} days)` })),
+];
+
+/** `options` plus the current value when it is not one of them, so legacy or custom values still show and save. */
+export function withCurrent<T extends string | number>(options: { value: T; label: string }[], current: unknown, label = (v: T) => String(v)) {
+  if (current == null || current === "" || options.some((o) => o.value === current)) return options;
+  return [...options, { value: current as T, label: label(current as T) }];
+}

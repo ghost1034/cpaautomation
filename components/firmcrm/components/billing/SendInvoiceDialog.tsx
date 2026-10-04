@@ -5,6 +5,7 @@ import { Button, Field, Input, Modal } from "@/components/firmcrm/components/ui"
 import { useFieldValidation } from "@/components/firmcrm/components/ui/Form";
 import { useToast } from "@/components/firmcrm/components/ui/Toast";
 import { formatAmount } from "@/components/firmcrm/lib/billingMath";
+import { formatEmailList } from "@/components/firmcrm/lib/inputFormat";
 import { TemplateField } from "./TemplateField";
 import { invoicePlaceholderValues } from "./templatePlaceholders";
 
@@ -47,11 +48,13 @@ export function SendInvoiceDialog({ invoice, profile, onClose, onSent }: { invoi
       footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" onClick={submit} disabled={busy}>{busy ? "Sending…" : "Send invoice"}</Button></>}>
       {invoice.status === "draft" && <p className="mb-4 rounded-crm-md border border-crm-warn-200 bg-crm-warn-50 px-3 py-2 text-[13px] text-crm-warn-700">Sending issues this draft: it gets the next invoice number and can no longer be edited.</p>}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="To *" error={v.shown("to")} errorId={v.errorId("to")}><Input type="email" value={values.to} onChange={set("to")} {...v.fieldProps("to")} /></Field>
-        <Field label="CC" hint="Comma-separated" error={v.shown("cc")} errorId={v.errorId("cc")}><Input value={values.cc} onChange={set("cc")} {...v.fieldProps("cc")} /></Field>
+        <Field label="To *" error={v.shown("to")} errorId={v.errorId("to")}><Input type="email" value={values.to} placeholder="ap@client.com" onChange={set("to")} {...v.fieldProps("to")}
+          onBlur={() => { setText("to")(values.to.trim()); v.touch("to"); }} /></Field>
+        <Field label="CC" hint="Comma-separated" error={v.shown("cc")} errorId={v.errorId("cc")}><Input value={values.cc} placeholder="cfo@client.com, controller@client.com" onChange={set("cc")} {...v.fieldProps("cc")}
+          onBlur={() => { setText("cc")(formatEmailList(values.cc)); v.touch("cc"); }} /></Field>
         <TemplateField label="Subject *" className="col-span-2" value={values.subject} onChange={setText("subject")} values={previewValues} maxLength={300}
           error={v.shown("subject")} errorId={v.errorId("subject")} controlProps={v.fieldProps("subject")} />
-        <TemplateField label="Message" className="col-span-2" multiline rows={7} value={values.message} onChange={setText("message")} values={previewValues}
+        <TemplateField label="Message" className="col-span-2" placeholder="Optional note to include in the email body" multiline rows={7} value={values.message} onChange={setText("message")} values={previewValues}
           maxLength={5000} hint="The invoice PDF is attached." />
       </div>
     </Modal>

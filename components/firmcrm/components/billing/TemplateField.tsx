@@ -20,10 +20,10 @@ export function insertAt(value: string, token: string, start: number | null, end
  * typing it, see the text as it will be rendered, and are warned about tokens or braces the server will not fill.
  * `values` are the real or sample placeholder values used for the preview line; unset ones show as `[Label]`.
  */
-export function TemplateField({ label, value, onChange, values, multiline = false, rows = 6, maxLength, disabled, hint, error, errorId, className, controlProps }: {
+export function TemplateField({ label, value, onChange, values, multiline = false, rows = 6, maxLength, disabled, hint, error, errorId, className, controlProps, placeholder }: {
   label: string; value: string; onChange: (value: string) => void; values: PlaceholderValues; multiline?: boolean; rows?: number;
   maxLength?: number; disabled?: boolean; hint?: string; error?: string | null; errorId?: string; className?: string;
-  controlProps?: Record<string, unknown>;
+  controlProps?: Record<string, unknown>; placeholder?: string;
 }) {
   const ref = useRef<Control | null>(null);
   const focused = useRef(false);
@@ -41,7 +41,7 @@ export function TemplateField({ label, value, onChange, values, multiline = fals
   const labelled = Object.fromEntries(TEMPLATE_PLACEHOLDERS.map((p) => [p.key, values[p.key] || `[${p.label}]`])) as PlaceholderValues;
   const preview = renderable && hasPlaceholder(value) ? renderTemplatePreview(value, labelled) : null;
   const common = {
-    ...controlProps, value, maxLength, disabled,
+    ...controlProps, value, maxLength, disabled, placeholder,
     onChange: (e: { target: { value: string } }) => onChange(e.target.value),
     onFocus: () => { focused.current = true; },
   };

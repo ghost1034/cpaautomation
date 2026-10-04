@@ -27,12 +27,22 @@ export function invoiceTotalCents(lines: { unit_cost: string | number; quantity:
   return lines.reduce((sum, line) => sum + (lineAmountCents(line.unit_cost, line.quantity) ?? 0), 0);
 }
 
-/** "$43,000.00" for USD, "EUR 1,000.00" otherwise — matches the PDF. */
-export function formatCents(cents: number, currency = "USD"): string {
+/** 125050 → "1,250.50" (no sign or currency). */
+export function formatHundredths(cents: number): string {
   const abs = Math.abs(cents);
   const whole = Math.floor(abs / 100).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  const text = `${whole}.${(abs % 100).toString().padStart(2, "0")}`;
-  return `${cents < 0 ? "-" : ""}${currency === "USD" ? "$" : `${currency} `}${text}`;
+  return `${whole}.${(abs % 100).toString().padStart(2, "0")}`;
+}
+
+/** "$43,000.00" for USD, "EUR 1,000.00" otherwise — matches the PDF. */
+export function formatCents(cents: number, currency = "USD"): string {
+  return `${cents < 0 ? "-" : ""}${currency === "USD" ? "$" : `${currency} `}${formatHundredths(cents)}`;
+}
+
+/** Tidy an amount the user typed ("1250.5" → "1,250.50"); invalid text is returned unchanged so the error stays visible. */
+export function tidyAmount(value: string): string {
+  const cents = parseHundredths(value);
+  return cents == null ? value : formatHundredths(cents);
 }
 
 /** Format an API decimal string such as "43000.00". */

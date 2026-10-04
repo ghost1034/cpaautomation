@@ -1,6 +1,8 @@
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { Button, Input, cn } from "@/components/firmcrm/components/ui";
-import { formatCents, invoiceTotalCents, lineAmountCents, parseHundredths } from "@/components/firmcrm/lib/billingMath";
+import { FormattedInput } from "@/components/firmcrm/components/ui/Form";
+import { DECIMAL_FORMAT } from "@/components/firmcrm/lib/inputFormat";
+import { formatCents, invoiceTotalCents, lineAmountCents, parseHundredths, tidyAmount } from "@/components/firmcrm/lib/billingMath";
 
 export type LineDraft = { key: string; description: string; unit_cost: string; quantity: string };
 
@@ -51,8 +53,10 @@ export function LineItemsEditor({ lines, onChange, currency, readOnly, showError
                            aria-invalid={errors[l.key] ? true : undefined} onChange={(e) => update(l.key, { description: e.target.value })} />
                     {errors[l.key] && <span className="mt-1 block text-[12px] text-crm-danger-600">{errors[l.key]}</span>}
                   </td>
-                  <td className="py-1.5 pr-2"><Input aria-label={`Line ${i + 1} unit cost`} inputMode="decimal" className="num text-right" value={l.unit_cost} placeholder="0.00" onChange={(e) => update(l.key, { unit_cost: e.target.value })} /></td>
-                  <td className="py-1.5 pr-2"><Input aria-label={`Line ${i + 1} quantity`} inputMode="decimal" className="num text-right" value={l.quantity} onChange={(e) => update(l.key, { quantity: e.target.value })} /></td>
+                  <td className="py-1.5 pr-2"><FormattedInput aria-label={`Line ${i + 1} unit cost`} inputMode="decimal" autoComplete="off" className="num text-right" value={l.unit_cost} placeholder="0.00"
+                    format={DECIMAL_FORMAT} onValueChange={(text) => update(l.key, { unit_cost: text })} onBlur={() => update(l.key, { unit_cost: tidyAmount(l.unit_cost) })} /></td>
+                  <td className="py-1.5 pr-2"><FormattedInput aria-label={`Line ${i + 1} quantity`} inputMode="decimal" autoComplete="off" className="num text-right" value={l.quantity} placeholder="1"
+                    format={DECIMAL_FORMAT} onValueChange={(text) => update(l.key, { quantity: text })} /></td>
                 </>}
                 <td className={cn("num py-2 pr-2 text-right", readOnly ? "" : "pt-3")}>{amount(l)}</td>
                 {!readOnly && (

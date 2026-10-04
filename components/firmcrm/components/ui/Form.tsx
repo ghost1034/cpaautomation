@@ -1,14 +1,15 @@
 /* Schema-driven form: one definition renders create + edit modals consistently.
    Validation (§6.10; records QA P1 #4): `noValidate` on the form, per-field touched/invalid tracking, inline 12px danger-600
    error text, `aria-invalid` + `aria-describedby`. Rules: required, email, number/money min-max. */
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEvent, type InputHTMLAttributes } from "react";
+import { forwardRef, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type InputHTMLAttributes } from "react";
 import { Button, Field, Input, Modal, Select, Textarea, cn } from "./index";
 import { useCrmContext } from "@/components/firmcrm/lib/auth";
 import { useToast } from "./Toast";
 import { TemplateField } from "@/components/firmcrm/components/billing/TemplateField";
 import type { PlaceholderValues } from "@/components/firmcrm/components/billing/templatePlaceholders";
+import { HEX_FORMAT, applyFormat, type InputFormat } from "@/components/firmcrm/lib/inputFormat";
 
-export type FieldType = "text" | "number" | "money" | "email" | "password" | "date" | "select" | "textarea" | "checkbox" | "tags" | "template";
+export type FieldType = "text" | "number" | "money" | "email" | "password" | "date" | "select" | "textarea" | "checkbox" | "tags" | "template" | "color";
 export type FieldDef = {
   name: string; label: string; type?: FieldType;
   options?: { value: string | number; label: string }[]; required?: boolean; placeholder?: string; hint?: string; span?: 1 | 2; step?: string;
@@ -18,6 +19,9 @@ export type FieldDef = {
   validate?: (value: unknown, values: FormValues) => string | null | undefined;
   /** `template` fields: multi-line editor, max length, and the placeholder values shown in the live preview. */
   multiline?: boolean; maxLength?: number; previewValues?: PlaceholderValues;
+  /** Text-like fields: reformat as the user types (phone, ZIP, routing number…). */
+  format?: InputFormat;
+  inputMode?: InputHTMLAttributes<HTMLInputElement>["inputMode"]; autoComplete?: string;
 };
 export type FormValues = Record<string, unknown>;
 export type FormErrors = Record<string, string>;
@@ -106,6 +110,46 @@ export function TagInput({ value, onChange, placeholder, id, ...a11y }: { value:
   );
 }
 
+type NativeInputEvent = Event & { inputType?: string };
+/**
+ * Text input that runs `format` on every edit and keeps the caret after the same meaningful character, so typing or
+ * deleting in the middle of "(555) 123-4567" behaves naturally. `onValueChange` receives the formatted text.
+ */
+export const FormattedInput = forwardRef<HTMLInputElement, Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange"> & {
+  value: string; onValueChange: (value: string) => void; format: InputFormat;
+}>(function FormattedInput({ value, onValueChange, format, ...p }, outerRef) {
+  const inner = useRef<HTMLInputElement | null>(null);
+  const caret = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const el = inner.current;
+    if (caret.current != null && el && el.ownerDocument.activeElement === el) el.setSelectionRange(caret.current, caret.current);
+    caret.current = null;
+  });
+  return (
+    <Input {...p} value={value}
+      ref={(el) => { inner.current = el; if (typeof outerRef === "function") outerRef(el); else if (outerRef) outerRef.current = el; }}
+      onChange={(e) => {
+        const type = (e.nativeEvent as NativeInputEvent).inputType ?? "";
+        const deleting = type.startsWith("deleteContentBackward") ? "backward" : type.startsWith("deleteContentForward") ? "forward" : null;
+        const out = applyFormat(format, value, e.target.value, e.target.selectionStart ?? e.target.value.length, deleting);
+        caret.current = out.caret;
+        onValueChange(out.value);
+      }} />
+  );
+});
+
+/** Hex color text field with a native swatch picker. */
+export function ColorInput({ value, onValueChange, ...p }: Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange"> & { value: string; onValueChange: (value: string) => void }) {
+  const valid = /^#[0-9A-F]{6}$/i.test(value);
+  return (
+    <span className="flex items-center gap-2">
+      <input type="color" aria-label="Pick color" value={valid ? value.toLowerCase() : "#000000"} onChange={(e) => onValueChange(e.target.value.toUpperCase())}
+             className="h-8 w-10 shrink-0 cursor-pointer rounded-crm-md border border-crm-sand-200 bg-crm-sand-0 p-0.5" />
+      <FormattedInput {...p} value={value} onValueChange={onValueChange} format={HEX_FORMAT} maxLength={7} autoComplete="off" spellCheck={false} className="mono" />
+    </span>
+  );
+}
+
 export function MoneyInput({ value, onValueChange, className, onBlur, onFocus, ...p }: Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "type"> & { value: number | null | undefined; onValueChange: (n: number | null) => void }) {
   const { settings } = useCrmContext();
   const [text, setText] = useState(value == null ? "" : moneyFmt.format(value));
@@ -149,7 +193,7 @@ export function SchemaForm({ fields, values, onChange, showAllErrors = false, er
         const a11y = { id, "aria-invalid": err ? true : undefined, "aria-describedby": err ? errId : undefined, onBlur: () => touch(f.name) } as const;
         if (f.type === "template") return (
           <TemplateField key={f.name} className="col-span-2" label={f.label + (f.required ? " *" : "")} hint={f.hint} error={err} errorId={errId}
-            value={(v as string) ?? ""} onChange={(text) => set(f.name, text)} values={f.previewValues ?? {}} multiline={f.multiline} maxLength={f.maxLength}
+            value={(v as string) ?? ""} onChange={(text) => set(f.name, text)} values={f.previewValues ?? {}} multiline={f.multiline} maxLength={f.maxLength} placeholder={f.placeholder}
             controlProps={a11y} />);
         if (f.type === "checkbox") return (
           <label key={f.name} className={`flex items-center gap-2 self-end pb-2 text-[13px] text-crm-sand-900 ${cls}`}>
@@ -160,9 +204,13 @@ export function SchemaForm({ fields, values, onChange, showAllErrors = false, er
             {f.type === "select" ? <Select {...a11y} value={(v as string | number | null) ?? ""} options={f.options ?? []} placeholder={f.placeholder ?? "Select…"} onChange={(e) => set(f.name, e.target.value === "" ? null : isNaN(Number(e.target.value)) || f.options?.some((o) => typeof o.value === "string") ? e.target.value : Number(e.target.value))} />
             : f.type === "textarea" ? <Textarea {...a11y} value={(v as string) ?? ""} onChange={(e) => set(f.name, e.target.value)} placeholder={f.placeholder} />
             : f.type === "tags" ? <TagInput {...a11y} value={Array.isArray(v) ? (v as string[]) : []} onChange={(tags) => set(f.name, tags)} placeholder={f.placeholder} />
+            : f.type === "color" ? <ColorInput {...a11y} value={(v as string) ?? ""} onValueChange={(text) => set(f.name, text)} placeholder={f.placeholder} />
+            : f.format ? <FormattedInput {...a11y} format={f.format} value={v == null ? "" : String(v)} placeholder={f.placeholder} maxLength={f.maxLength}
+                type={f.type === "password" ? "password" : "text"} inputMode={f.inputMode} autoComplete={f.autoComplete ?? (f.type === "password" ? "new-password" : undefined)}
+                onValueChange={(text) => set(f.name, text === "" ? null : text)} />
             : f.type === "money" ? <MoneyInput {...a11y} value={typeof v === "number" ? v : v == null || v === "" ? null : Number(v)} onValueChange={(n) => set(f.name, n)} placeholder={f.placeholder ?? "0"} min={f.min} max={f.max} />
             : <Input {...a11y} type={f.type ?? "text"} step={f.step} min={f.min} max={f.max} value={v == null ? "" : String(v)} placeholder={f.placeholder}
-                     autoComplete={f.type === "password" ? "new-password" : undefined}
+                     maxLength={f.maxLength} inputMode={f.inputMode} autoComplete={f.autoComplete ?? (f.type === "password" ? "new-password" : undefined)}
                      onChange={(e) => set(f.name, f.type === "number" ? (e.target.value === "" ? null : Number(e.target.value)) : e.target.value === "" && f.type !== "text" ? null : e.target.value)} />}
           </Field>
         );

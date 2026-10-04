@@ -14,7 +14,9 @@ import { InvoicePreview } from "@/components/firmcrm/components/billing/InvoiceP
 import { SendInvoiceDialog } from "@/components/firmcrm/components/billing/SendInvoiceDialog";
 import { TemplateField } from "@/components/firmcrm/components/billing/TemplateField";
 import { invoicePlaceholderValues, renderTemplatePreview } from "@/components/firmcrm/components/billing/templatePlaceholders";
-import { formatCents, invoiceTotalCents } from "@/components/firmcrm/lib/billingMath";
+import { formatCents, invoiceTotalCents, tidyAmount } from "@/components/firmcrm/lib/billingMath";
+import { formatEmailList } from "@/components/firmcrm/lib/inputFormat";
+import { CURRENCIES, withCurrent } from "@/components/firmcrm/lib/options";
 import { useBillingProfiles } from "./BillingPage";
 import { useAuth, useCrmContext } from "@/components/firmcrm/lib/auth";
 import { fmtDateTime, titleCase } from "@/components/firmcrm/lib/format";
@@ -29,7 +31,7 @@ const fromInvoice = (i: Invoice): Draft => ({
   billing_profile_id: i.billing_profile_id, account_id: i.account_id ?? null, engagement_id: i.engagement_id ?? null, opportunity_id: i.opportunity_id ?? null,
   billed_to_name: i.billed_to_name, billed_to_address: i.billed_to_address ?? "", billed_to_email: i.billed_to_email ?? "", billed_to_cc: i.billed_to_cc ?? "",
   issue_date: i.issue_date ?? "", due_date: i.due_date ?? "", terms_text: i.terms_text ?? "", currency: i.currency, notes: i.notes ?? "",
-  lines: (i.lines ?? []).map((l) => newLine({ description: l.description, unit_cost: l.unit_cost, quantity: String(Number(l.quantity)) })),
+  lines: (i.lines ?? []).map((l) => newLine({ description: l.description, unit_cost: tidyAmount(l.unit_cost), quantity: String(Number(l.quantity)) })),
 });
 const toBody = (d: Draft): InvoiceInput => ({
   billing_profile_id: d.billing_profile_id!, account_id: d.account_id, engagement_id: d.engagement_id, opportunity_id: d.opportunity_id,
@@ -193,13 +195,13 @@ export default function InvoiceEditorPage() {
                   placeholder={draft.account_id ? "No engagement" : "Choose an account first"} onChange={(e) => set("engagement_id", e.target.value ? Number(e.target.value) : null)} />
               </Field>
               <Field label="Customer name *" className="col-span-2" error={showErrors && !draft.billed_to_name.trim() ? "Customer name is required." : undefined}>
-                <Input value={draft.billed_to_name} maxLength={200} onChange={(e) => set("billed_to_name", e.target.value)} />
+                <Input value={draft.billed_to_name} maxLength={200} placeholder="e.g. Acme Holdings, LLC" onChange={(e) => set("billed_to_name", e.target.value)} />
               </Field>
               <Field label="Address" className="col-span-2" hint="One line per row, as it should print.">
-                <Textarea rows={3} value={draft.billed_to_address} maxLength={1000} onChange={(e) => set("billed_to_address", e.target.value)} />
+                <Textarea rows={3} value={draft.billed_to_address} maxLength={1000} placeholder={"123 Main Street, Suite 400\nSpringfield, IL 62701"} onChange={(e) => set("billed_to_address", e.target.value)} />
               </Field>
-              <Field label="Billing email" hint="Default recipient when sending."><Input type="email" value={draft.billed_to_email} onChange={(e) => set("billed_to_email", e.target.value)} /></Field>
-              <Field label="CC" hint="Comma-separated."><Input value={draft.billed_to_cc} maxLength={500} onChange={(e) => set("billed_to_cc", e.target.value)} /></Field>
+              <Field label="Billing email" hint="Default recipient when sending."><Input type="email" value={draft.billed_to_email} placeholder="ap@client.com" onChange={(e) => set("billed_to_email", e.target.value)} onBlur={() => set("billed_to_email", draft.billed_to_email.trim())} /></Field>
+              <Field label="CC" hint="Comma-separated."><Input value={draft.billed_to_cc} maxLength={500} placeholder="cfo@client.com, controller@client.com" onChange={(e) => set("billed_to_cc", e.target.value)} onBlur={() => set("billed_to_cc", formatEmailList(draft.billed_to_cc))} /></Field>
             </fieldset>
           </Card>
 
@@ -211,10 +213,10 @@ export default function InvoiceEditorPage() {
             <fieldset disabled={!editable} className="grid grid-cols-3 gap-4">
               <Field label="Date of issue" hint="Defaults to the day it is issued."><Input type="date" value={draft.issue_date} onChange={(e) => set("issue_date", e.target.value)} /></Field>
               <Field label="Due date" hint={profile ? `Defaults to ${profile.default_terms_days} days after issue.` : undefined}><Input type="date" value={draft.due_date} onChange={(e) => set("due_date", e.target.value)} /></Field>
-              <Field label="Currency"><Input value={draft.currency} maxLength={3} onChange={(e) => set("currency", e.target.value.toUpperCase())} /></Field>
+              <Field label="Currency"><Select value={draft.currency} options={withCurrent(CURRENCIES, draft.currency)} onChange={(e) => set("currency", e.target.value)} /></Field>
               <TemplateField label="Terms" className="col-span-3" value={draft.terms_text} maxLength={500} onChange={(text) => set("terms_text", text)}
                 values={termValues} disabled={!editable} hint="Placeholders are filled in when the invoice is issued." />
-              <Field label="Notes" className="col-span-3" hint="Printed under the terms."><Textarea rows={2} value={draft.notes} maxLength={5000} onChange={(e) => set("notes", e.target.value)} /></Field>
+              <Field label="Notes" className="col-span-3" hint="Printed under the terms."><Textarea rows={2} value={draft.notes} maxLength={5000} placeholder="e.g. Thank you for your business!" onChange={(e) => set("notes", e.target.value)} /></Field>
             </fieldset>
           </Card>
         </div>
