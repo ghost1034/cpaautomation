@@ -12,6 +12,9 @@ import { InvoiceStatusBadge } from "@/components/firmcrm/components/billing/Invo
 import { LineItemsEditor, lineErrors, newLine, type LineDraft } from "@/components/firmcrm/components/billing/LineItemsEditor";
 import { InvoicePreview } from "@/components/firmcrm/components/billing/InvoicePreview";
 import { SendInvoiceDialog } from "@/components/firmcrm/components/billing/SendInvoiceDialog";
+import { TemplateField } from "@/components/firmcrm/components/billing/TemplateField";
+import { invoicePlaceholderValues, renderTemplatePreview } from "@/components/firmcrm/components/billing/templatePlaceholders";
+import { formatCents, invoiceTotalCents } from "@/components/firmcrm/lib/billingMath";
 import { useBillingProfiles } from "./BillingPage";
 import { useAuth, useCrmContext } from "@/components/firmcrm/lib/auth";
 import { fmtDateTime, titleCase } from "@/components/firmcrm/lib/format";
@@ -157,6 +160,7 @@ export default function InvoiceEditorPage() {
     ...(editable && id != null ? [{ label: "Delete draft", icon: <Trash2 />, tone: "danger" as const, onSelect: remove, disabled: busy }] : []),
   ];
   const issuer = i?.issuer_snapshot ? (i.issuer_snapshot as Parameters<typeof InvoicePreview>[0]["issuer"]) : profile;
+  const termValues = invoicePlaceholderValues({ ...draft, number: i?.number }, formatCents(invoiceTotalCents(draft.lines), draft.currency), issuer?.issuer_name, profile?.default_terms_days);
   const showErrors = attempted;
 
   return (
@@ -208,7 +212,8 @@ export default function InvoiceEditorPage() {
               <Field label="Date of issue" hint="Defaults to the day it is issued."><Input type="date" value={draft.issue_date} onChange={(e) => set("issue_date", e.target.value)} /></Field>
               <Field label="Due date" hint={profile ? `Defaults to ${profile.default_terms_days} days after issue.` : undefined}><Input type="date" value={draft.due_date} onChange={(e) => set("due_date", e.target.value)} /></Field>
               <Field label="Currency"><Input value={draft.currency} maxLength={3} onChange={(e) => set("currency", e.target.value.toUpperCase())} /></Field>
-              <Field label="Terms" className="col-span-3" hint="{due_date} is filled in when the invoice is issued."><Input value={draft.terms_text} maxLength={500} onChange={(e) => set("terms_text", e.target.value)} /></Field>
+              <TemplateField label="Terms" className="col-span-3" value={draft.terms_text} maxLength={500} onChange={(text) => set("terms_text", text)}
+                values={termValues} disabled={!editable} hint="Placeholders are filled in when the invoice is issued." />
               <Field label="Notes" className="col-span-3" hint="Printed under the terms."><Textarea rows={2} value={draft.notes} maxLength={5000} onChange={(e) => set("notes", e.target.value)} /></Field>
             </fieldset>
           </Card>
@@ -218,7 +223,7 @@ export default function InvoiceEditorPage() {
           <Card title="Preview">
             <InvoicePreview issuer={issuer} number={i?.number} issueDate={draft.issue_date || (status === "draft" ? new Date().toISOString().slice(0, 10) : null)}
               billedToName={draft.billed_to_name} billedToAddress={draft.billed_to_address} lines={draft.lines} currency={draft.currency}
-              terms={[draft.terms_text.replace("{due_date}", draft.due_date ? `${draft.due_date.slice(5, 7)}/${draft.due_date.slice(8, 10)}/${draft.due_date.slice(0, 4)}` : "{due_date}"), draft.notes].filter(Boolean).join("\n")} />
+              terms={[renderTemplatePreview(draft.terms_text, termValues), draft.notes].filter(Boolean).join("\n")} />
           </Card>
           {!!i?.deliveries?.length && (
             <Card title="Email history">

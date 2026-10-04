@@ -5,8 +5,10 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type FormEven
 import { Button, Field, Input, Modal, Select, Textarea, cn } from "./index";
 import { useCrmContext } from "@/components/firmcrm/lib/auth";
 import { useToast } from "./Toast";
+import { TemplateField } from "@/components/firmcrm/components/billing/TemplateField";
+import type { PlaceholderValues } from "@/components/firmcrm/components/billing/templatePlaceholders";
 
-export type FieldType = "text" | "number" | "money" | "email" | "password" | "date" | "select" | "textarea" | "checkbox" | "tags";
+export type FieldType = "text" | "number" | "money" | "email" | "password" | "date" | "select" | "textarea" | "checkbox" | "tags" | "template";
 export type FieldDef = {
   name: string; label: string; type?: FieldType;
   options?: { value: string | number; label: string }[]; required?: boolean; placeholder?: string; hint?: string; span?: 1 | 2; step?: string;
@@ -14,6 +16,8 @@ export type FieldDef = {
   min?: number; max?: number;
   /** Custom rule; return an error string or null. Runs after the built-in rules. */
   validate?: (value: unknown, values: FormValues) => string | null | undefined;
+  /** `template` fields: multi-line editor, max length, and the placeholder values shown in the live preview. */
+  multiline?: boolean; maxLength?: number; previewValues?: PlaceholderValues;
 };
 export type FormValues = Record<string, unknown>;
 export type FormErrors = Record<string, string>;
@@ -143,6 +147,10 @@ export function SchemaForm({ fields, values, onChange, showAllErrors = false, er
         const errId = `${id}-error`;
         const err = (showAllErrors || touched[f.name] || extErrors?.[f.name]) ? errors[f.name] : undefined;
         const a11y = { id, "aria-invalid": err ? true : undefined, "aria-describedby": err ? errId : undefined, onBlur: () => touch(f.name) } as const;
+        if (f.type === "template") return (
+          <TemplateField key={f.name} className="col-span-2" label={f.label + (f.required ? " *" : "")} hint={f.hint} error={err} errorId={errId}
+            value={(v as string) ?? ""} onChange={(text) => set(f.name, text)} values={f.previewValues ?? {}} multiline={f.multiline} maxLength={f.maxLength}
+            controlProps={a11y} />);
         if (f.type === "checkbox") return (
           <label key={f.name} className={`flex items-center gap-2 self-end pb-2 text-[13px] text-crm-sand-900 ${cls}`}>
             <input type="checkbox" checked={!!v} onChange={(e) => set(f.name, e.target.checked)} id={id} />{f.label}
