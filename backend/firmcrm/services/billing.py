@@ -1,7 +1,9 @@
-"""Invoice lifecycle: drafts, numbering, issue snapshots and PDF documents."""
+"""Invoice lifecycle: drafts, numbering, issue snapshots, PDF documents and email delivery."""
 
 from __future__ import annotations
 
+import html
+import logging
 from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
@@ -11,9 +13,11 @@ from sqlalchemy.orm import Session
 
 from firmcrm.core.audit import record
 from firmcrm.core.errors import Conflict, DomainError, NotFound
-from firmcrm.models import Account, BillingProfile, Contact, Engagement, FirmCrmSettings, Invoice, InvoiceLine, User, utcnow
+from firmcrm.models import Account, BillingProfile, Contact, Engagement, FirmCrmSettings, Invoice, InvoiceDelivery, InvoiceLine, User, utcnow
 from firmcrm.services.invoice_pdf import format_date, format_money, render_invoice_pdf
 from services.pdf_common import CENTS
+
+logger = logging.getLogger(__name__)
 
 # Issuer fields frozen onto an invoice when it is issued. The account number travels separately, encrypted.
 SNAPSHOT_FIELDS = (
@@ -248,3 +252,48 @@ def pdf_filename(invoice: Invoice) -> str:
     customer = "".join(ch for ch in invoice.billed_to_name if ch.isalnum() or ch in " -_").strip()[:60] or "Customer"
     return f"{customer} Invoice {invoice.number or 'Draft'}.pdf"
 
+
+# ---- delivery
+
+def send(db: Session, actor: User, invoice: Invoice, *, to: str, cc: list[str], subject: str | None,
+         message: str | None) -> InvoiceDelivery:
+    """Email the invoice PDF. A failed delivery is recorded and never marks the invoice as sent."""
+    from services.email_service import email_service
+    if invoice.status in ("void", "paid"):
+        raise Conflict(f"Cannot send an invoice that is {invoice.status}", code="invalid_invoice_transition")
+    if invoice.status == "draft":
+        issue(db, actor, invoice)
+    issuer, _ = _issuer_and_account(db, invoice)
+    profile = db.get(BillingProfile, invoice.billing_profile_id)
+    issuer_name = issuer.get("issuer_name") or ""
+    subject = render_template(subject or (profile.email_subject_template if profile else "Invoice {invoice_number}"), invoice, issuer_name)
+    body = render_template(message or (profile.email_message_template if profile else ""), invoice, issuer_name)
+    pdf = invoice_pdf(db, invoice)
+    html_body = "<div style=\"font-family:Arial,sans-serif;font-size:14px\">" + html.escape(body).replace("\n", "<br>") + "</div>"
+
+    def deliver(recipient: str) -> str | None:
+        try:
+            ok = email_service.send_html_email(recipient, subject, html_body, body, reply_to=issuer.get("email") or None,
+                                               attachments=[(pdf_filename(invoice), pdf, "application/pdf")])
+            return None if ok else f"Email delivery to {recipient} failed"
+        except Exception as exc:  # provider errors become a failed delivery, not a 500
+            logger.exception("Invoice email failed for invoice %s", invoice.id)
+            return f"Email delivery to {recipient} failed: {exc}"
+
+    # The primary recipient decides the outcome; copy failures are reported but do not undo a delivered invoice.
+    error = deliver(to)
+    delivered = error is None
+    if delivered:
+        errors = [e for e in (deliver(address) for address in cc) if e]
+        error = "; ".join(errors) or None
+    delivery = InvoiceDelivery(invoice_id=invoice.id, to_email=to, cc=", ".join(cc) or None, subject=subject[:300],
+                               status="sent" if delivered else "failed", error=error[:1000] if error else None,
+                               sent_by_id=actor.id)
+    invoice.deliveries.append(delivery)
+    if delivered:
+        if invoice.status == "issued":
+            invoice.status = "sent"
+        invoice.sent_at = invoice.sent_at or utcnow()
+    record(db, actor_id=actor.id, action=f"invoice.delivery_{delivery.status}", entity_type="invoice", entity_id=invoice.id,
+           after={"to": to, "cc": cc, "error": error})
+    return delivery

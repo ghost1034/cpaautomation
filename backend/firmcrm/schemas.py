@@ -778,5 +778,12 @@ class FirmCrmInvoicePrefillOut(BaseModel):
     billed_to_email: str | None = None
 
 
+class FirmCrmInvoiceSendIn(BaseModel):
+    to: EmailStr
+    cc: list[EmailStr] = Field(default_factory=list, max_length=10)
+    subject: Annotated[str, Field(min_length=1, max_length=300)] | None = None
+    message: L | None = None
+
+
 class FirmCrmInvoiceVoidIn(BaseModel):
     reason: M | None = None

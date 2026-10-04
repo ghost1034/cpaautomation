@@ -85,6 +85,7 @@ export const billingApi = {
   update: (id: number, b: Partial<T.InvoiceInput>) => patch<T.Invoice>(`/billing/invoices/${id}`, b),
   remove: (id: number) => del(`/billing/invoices/${id}`),
   issue: (id: number) => post<T.Invoice>(`/billing/invoices/${id}/issue`),
+  send: (id: number, b: T.InvoiceSend) => post<T.InvoiceDelivery>(`/billing/invoices/${id}/send`, b),
   markPaid: (id: number) => post<T.Invoice>(`/billing/invoices/${id}/mark-paid`),
   void: (id: number, reason?: string) => post<T.Invoice>(`/billing/invoices/${id}/void`, { reason: reason || null }),
   duplicate: (id: number) => post<T.Invoice>(`/billing/invoices/${id}/duplicate`),

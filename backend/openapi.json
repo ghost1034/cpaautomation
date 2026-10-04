@@ -43340,6 +43340,104 @@
         }
       }
     },
+    "/api/firmcrm/billing/invoices/{invoice_id}/send": {
+      "post": {
+        "tags": [
+          "firmcrm",
+          "billing"
+        ],
+        "summary": "Send Invoice",
+        "operationId": "send_invoice_api_firmcrm_billing_invoices__invoice_id__send_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Invoice Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FirmCrmInvoiceSendIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmCrmInvoiceDeliveryOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmCrmError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmCrmError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmCrmError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmCrmError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmCrmError"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        }
+      }
+    },
     "/api/firmcrm/billing/invoices/{invoice_id}/mark-paid": {
       "post": {
         "tags": [
@@ -62726,6 +62824,54 @@
           "billed_to_name"
         ],
         "title": "FirmCrmInvoicePrefillOut"
+      },
+      "FirmCrmInvoiceSendIn": {
+        "properties": {
+          "to": {
+            "type": "string",
+            "format": "email",
+            "title": "To"
+          },
+          "cc": {
+            "items": {
+              "type": "string",
+              "format": "email"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Cc"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "to"
+        ],
+        "title": "FirmCrmInvoiceSendIn"
       },
       "FirmCrmInvoiceUpdate": {
         "properties": {

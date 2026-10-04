@@ -1,12 +1,14 @@
-"""FirmCRM billing: profiles, invoice lifecycle, numbering, PDF output and tenant/wall isolation."""
+"""FirmCRM billing: profiles, invoice lifecycle, numbering, PDF output, delivery and tenant/wall isolation."""
 from decimal import Decimal
 
 import pymupdf
+import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from firmcrm import models as m
 from firmcrm.lifecycle import export_firm_crm
+from services.email_service import email_service
 from test_firmcrm import account, call, crm, wall  # noqa: F401  (crm is a fixture)
 
 PROFILE = {
@@ -145,3 +147,32 @@ def test_walled_account_invoices_are_hidden(crm):
     call(crm, 'get', f'/billing/invoices/{invoice["id"]}', 'manager', 404)
     assert call(crm, 'get', f'/billing/invoices/{invoice["id"]}', 'partner')['id'] == invoice['id']
 
+
+@pytest.mark.parametrize('outcome', [True, False])
+def test_send_records_delivery_without_false_success(crm, monkeypatch, outcome):
+    sent = []
+
+    def fake_send(to, subject, html_body, text_body, reply_to=None, inline_images=None, attachments=None):
+        sent.append({'to': to, 'subject': subject, 'reply_to': reply_to, 'attachments': attachments})
+        return outcome
+
+    monkeypatch.setattr(email_service, 'send_html_email', fake_send)
+    p = profile(crm)
+    invoice = draft(crm, p)
+    delivery = call(crm, 'post', f'/billing/invoices/{invoice["id"]}/send',
+                    json={'to': 'ap@sb.example', 'cc': ['cfo@sb.example']})
+    after = call(crm, 'get', f'/billing/invoices/{invoice["id"]}')
+    assert after['number'] == '00001'  # sending a draft issues it first
+    assert sent[0]['to'] == 'ap@sb.example' and sent[0]['reply_to'] == 'billing@cpaautomation.ai'
+    assert sent[0]['subject'] == 'Invoice 00001 from CPA Automation, Inc.'
+    filename, content, mime = sent[0]['attachments'][0]
+    assert mime == 'application/pdf' and content.startswith(b'%PDF') and filename.endswith('Invoice 00001.pdf')
+    if outcome:
+        assert delivery['status'] == 'sent' and after['status'] == 'sent' and after['sent_at']
+        assert [s['to'] for s in sent] == ['ap@sb.example', 'cfo@sb.example']
+    else:
+        assert delivery['status'] == 'failed' and delivery['error']
+        assert after['status'] == 'issued' and after['sent_at'] is None
+        assert len(sent) == 1  # copies are not sent when the primary delivery fails
+    assert after['deliveries'][0]['status'] == delivery['status']
+    call(crm, 'post', f'/billing/invoices/{invoice["id"]}/send', 'staff', 403, json={'to': 'ap@sb.example'})

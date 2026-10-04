@@ -19,8 +19,10 @@ from firmcrm.schemas import (
     FirmCrmBillingProfileOut,
     FirmCrmBillingProfileUpdate,
     FirmCrmInvoiceCreate,
+    FirmCrmInvoiceDeliveryOut,
     FirmCrmInvoiceOut,
     FirmCrmInvoicePrefillOut,
+    FirmCrmInvoiceSendIn,
     FirmCrmInvoiceUpdate,
     FirmCrmInvoiceVoidIn,
     FirmCrmPage,
@@ -176,6 +178,14 @@ def issue_invoice(invoice_id: int, db: Session = Depends(get_db), actor: User = 
     invoice = billing.issue(db, actor, get_or_404(db, Invoice, invoice_id, "Invoice"))
     db.commit()
     return _out(db, [invoice])[0]
+
+
+@router.post("/invoices/{invoice_id}/send", response_model=FirmCrmInvoiceDeliveryOut)
+def send_invoice(invoice_id: int, body: FirmCrmInvoiceSendIn, db: Session = Depends(get_db), actor: User = Depends(at_least("manager"))):
+    invoice = get_or_404(db, Invoice, invoice_id, "Invoice")
+    delivery = billing.send(db, actor, invoice, to=str(body.to), cc=[str(c) for c in body.cc], subject=body.subject, message=body.message)
+    db.commit()
+    return delivery
 
 
 @router.post("/invoices/{invoice_id}/mark-paid", response_model=FirmCrmInvoiceOut)

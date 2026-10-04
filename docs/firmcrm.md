@@ -32,6 +32,19 @@ The shared client's name and industry are authoritative after linking, including
 
 Links are permanent in v1. An account with an active wall cannot be linked, and a linked account cannot receive an account wall. Opportunity walls remain available. Archival, reopening, or winning never deletes the shared client. Both platform client-deletion paths return an actionable conflict for linked clients. Firm purge removes CRM dependents before shared clients; firm exports include CRM records under the requesting actor's visibility.
 
+## Billing
+
+The Billing submodule (`/dashboard/firmcrm/billing`) issues client invoices in the firm's invoice layout: accent bands, issuer header, BILLED TO block, a line-item table, wire instructions, invoice total and terms.
+
+- **Billing profiles** hold the firm's issuer details and wire instructions. A firm can have several profiles, and one is the default. Managers and above create, edit and archive them; everyone can choose one on an invoice. The bank account number is encrypted with `encryption_service` (Fernet locally, KMS in production). The API only returns its last four digits, and firm exports omit it. It is decrypted only to render a PDF.
+- **Invoices** can link an Account, which prefills the customer name, address and the email of a contact on the account, and optionally one of that account's Engagements. The customer details are copied onto the invoice and stay editable. Drafts can be edited by their author or a manager. Line amounts and totals are recomputed on the server in `Decimal`, rounded half-up to cents.
+- **Lifecycle**: draft → issued → sent → paid, and void from any unpaid state. Issuing allocates the next number from `firmcrm_settings.next_invoice_number`; this is serialized by the per-firm row lock in `get_db`, and drafts and deleted drafts never consume numbers. Issuing also freezes the issuer details and the encrypted account number onto the invoice, so later profile edits never change an issued invoice. Issue, send, mark paid and void require manager or above. Issued invoices are never edited or deleted; void them and duplicate instead.
+- **PDF** (`firmcrm/services/invoice_pdf.py`) is rendered on demand with ReportLab and is not stored. Drafts carry a DRAFT watermark.
+- **Email** uses `email_service.send_html_email` with the PDF attached and replies going to the profile's billing email. Sending a draft issues it first. Every attempt is recorded in `firmcrm_invoice_deliveries`. A failed delivery to the primary recipient leaves the invoice status unchanged. CC failures are reported on the delivery record.
+- Invoices on walled accounts or engagements follow the same ethical-wall visibility as the account.
+
+Migration `085_firmcrm_billing` adds the billing tables, `firmcrm_accounts.postal_code`, and the invoice numbering columns on `firmcrm_settings`. It needs no new configuration.
+
 ## Frontend and contracts
 
 Every retained screen has a native App Router route, including direct account, contact, and opportunity links. CRM navigation sits inside the shared dashboard shell. The shared command-palette callback focuses module search. Platform account controls handle sign-in and sign-out.
@@ -47,7 +60,7 @@ Shared firm creation, joining, profile changes, and member changes also invalida
 From the repository root:
 
 ```sh
-backend/.venv/bin/python -m pytest backend/tests/firmcrm_source backend/tests/test_firmcrm.py backend/tests/test_shared_clients.py backend/tests/test_pbc_service.py -q
+backend/.venv/bin/python -m pytest backend/tests/firmcrm_source backend/tests/test_firmcrm.py backend/tests/test_firmcrm_billing.py backend/tests/test_shared_clients.py backend/tests/test_pbc_service.py -q
 npm run generate-types
 npm run check:openapi
 npm run type-check

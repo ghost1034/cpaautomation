@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Ban, CheckCircle2, Copy, Download, FileCheck2, Save, Trash2 } from "lucide-react";
+import { Ban, CheckCircle2, Copy, Download, FileCheck2, Mail, Save, Trash2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@/components/firmcrm/lib/query";
 import { Link, useNavigate, useParams } from "@/components/firmcrm/lib/navigation";
 import { accountsApi, billingApi, engagementsApi } from "@/components/firmcrm/api";
@@ -11,9 +11,10 @@ import { useToast } from "@/components/firmcrm/components/ui/Toast";
 import { InvoiceStatusBadge } from "@/components/firmcrm/components/billing/InvoiceStatusBadge";
 import { LineItemsEditor, lineErrors, newLine, type LineDraft } from "@/components/firmcrm/components/billing/LineItemsEditor";
 import { InvoicePreview } from "@/components/firmcrm/components/billing/InvoicePreview";
+import { SendInvoiceDialog } from "@/components/firmcrm/components/billing/SendInvoiceDialog";
 import { useBillingProfiles } from "./BillingPage";
 import { useAuth, useCrmContext } from "@/components/firmcrm/lib/auth";
-import { titleCase } from "@/components/firmcrm/lib/format";
+import { fmtDateTime, titleCase } from "@/components/firmcrm/lib/format";
 
 type Draft = {
   billing_profile_id: number | null; account_id: number | null; engagement_id: number | null;
@@ -49,7 +50,7 @@ export default function InvoiceEditorPage() {
   const [baseline, setBaselineState] = useState("");
   const baselineRef = useRef("");
   const setBaseline = (value: string) => { baselineRef.current = value; setBaselineState(value); };
-  const [busy, setBusy] = useState(false); const [attempted, setAttempted] = useState(false);
+  const [busy, setBusy] = useState(false); const [attempted, setAttempted] = useState(false); const [sending, setSending] = useState(false);
 
   // Initialise the form once per loaded record (or once for a new invoice when profiles arrive).
   const loadedKey = id == null ? "new" : invoice.data ? `${invoice.data.id}:${invoice.data.updated_at}` : null;
@@ -132,6 +133,7 @@ export default function InvoiceEditorPage() {
     if (!(await confirm({ title: "Issue this invoice?", body: "It receives the next invoice number and can no longer be edited.", confirmLabel: "Issue invoice", tone: "primary" }))) return;
     await run((target) => billingApi.issue(target), "Invoice issued", true);
   };
+  const openSend = async () => { if (status === "draft" && (await save(true)) == null) return; setSending(true); };
   const voidInvoice = async () => {
     const text = await reason({ title: `Void invoice ${invoice.data?.number ?? ""}?`.trim(), label: "Reason", placeholder: "e.g. Issued in error", confirmLabel: "Void invoice", tone: "danger" });
     if (text !== null) await run((target) => billingApi.void(target, text), "Invoice voided");
@@ -166,6 +168,7 @@ export default function InvoiceEditorPage() {
           {editable && <Button onClick={() => save()} disabled={busy || (id != null && !dirty)}><Save size={14} />{id == null ? "Save draft" : "Save"}</Button>}
           <Button onClick={downloadPdf} disabled={busy}><Download size={14} />{status === "draft" ? "Preview PDF" : "Download PDF"}</Button>
           {manager && id != null && status === "draft" && <Button onClick={issue} disabled={busy}><FileCheck2 size={14} />Issue</Button>}
+          {manager && id != null && ["draft", "issued", "sent"].includes(status) && <Button variant="primary" onClick={openSend} disabled={busy}><Mail size={14} />{status === "sent" ? "Resend" : "Send"}</Button>}
           {manager && ["issued", "sent"].includes(status) && <Button onClick={() => run((target) => billingApi.markPaid(target), "Marked as paid")} disabled={busy}><CheckCircle2 size={14} />Mark paid</Button>}
           {menu.length > 0 && <OverflowMenu items={menu} size="md" label="More invoice actions" />}
         </>} />
@@ -217,8 +220,23 @@ export default function InvoiceEditorPage() {
               billedToName={draft.billed_to_name} billedToAddress={draft.billed_to_address} lines={draft.lines} currency={draft.currency}
               terms={[draft.terms_text.replace("{due_date}", draft.due_date ? `${draft.due_date.slice(5, 7)}/${draft.due_date.slice(8, 10)}/${draft.due_date.slice(0, 4)}` : "{due_date}"), draft.notes].filter(Boolean).join("\n")} />
           </Card>
+          {!!i?.deliveries?.length && (
+            <Card title="Email history">
+              <ul className="space-y-2 text-[13px]">
+                {[...i.deliveries].reverse().map((d) => (
+                  <li key={d.id} className="flex items-start justify-between gap-3">
+                    <div className="min-w-0"><div className="truncate">{d.to_email}{d.cc && <span className="text-crm-sand-500"> · cc {d.cc}</span>}</div>
+                      {d.error && <div className={d.status === "failed" ? "text-crm-danger-600" : "text-crm-warn-700"}>{d.error}</div>}</div>
+                    <div className="shrink-0 text-right text-[12px] text-crm-sand-500"><div className={d.status === "failed" ? "text-crm-danger-600" : "text-crm-success-700"}>{titleCase(d.status)}</div>{fmtDateTime(d.created_at)}</div>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
         </div>
       </div>
+      {sending && i && <SendInvoiceDialog invoice={i} profile={profile} onClose={() => setSending(false)}
+        onSent={() => { qc.invalidateQueries({ queryKey: ["invoice", i.id] }); qc.invalidateQueries({ queryKey: ["invoices"] }); }} />}
     </div>
   );
 }
