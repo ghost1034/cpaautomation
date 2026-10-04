@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useRef, useState, type ReactNode } from 'react'
-import { Building2, Users, Target, Kanban, ShieldCheck, ShieldUser, Briefcase, Megaphone, BarChart3, Settings, LayoutDashboard, CheckSquare, Database, Search } from 'lucide-react'
+import { Building2, Users, Target, Kanban, ShieldCheck, ShieldUser, Briefcase, Megaphone, BarChart3, Settings, LayoutDashboard, CheckSquare, Database, Search, Receipt } from 'lucide-react'
 import { useDashboardModuleChrome } from '@/components/layout/dashboard-module-chrome'
 import { Link, useLocation, useNavigate } from '../../lib/navigation'
 import { useAuth, useCrmContext } from '../../lib/auth'
@@ -11,7 +11,7 @@ import { accountsApi, contactsApi, oppsApi } from '../../api'
 const NAV = [
   ['/', 'Dashboard', LayoutDashboard], ['/tasks', 'My tasks', CheckSquare], ['/leads', 'Leads', Target],
   ['/opportunities', 'Opportunities', Kanban], ['/clearance', 'Clearance', ShieldCheck], ['/engagements', 'Engagements', Briefcase],
-  ['/accounts', 'Accounts', Building2], ['/contacts', 'Contacts', Users], ['/campaigns', 'Campaigns', Megaphone],
+  ['/billing', 'Billing', Receipt], ['/accounts', 'Accounts', Building2], ['/contacts', 'Contacts', Users], ['/campaigns', 'Campaigns', Megaphone],
   ['/reports', 'Reports', BarChart3], ['/data', 'Data', Database], ['/admin', 'Administration', ShieldUser], ['/settings', 'Settings', Settings],
 ] as const
 export default function Shell({ children }: { children: ReactNode }) {

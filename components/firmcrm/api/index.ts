@@ -73,6 +73,23 @@ export const engagementsApi = {
   list: (p?: Q) => get<T.Page<T.Engagement>>("/engagements", p),
   update: (id: number, b: Partial<T.Engagement>) => patch<T.Engagement>(`/engagements/${id}`, b),
 };
+export const billingApi = {
+  profiles: (include_archived = false) => get<T.BillingProfile[]>("/billing/profiles", include_archived ? { include_archived } : undefined),
+  createProfile: (b: T.BillingProfileInput) => post<T.BillingProfile>("/billing/profiles", b),
+  updateProfile: (id: number, b: Partial<T.BillingProfileInput>) => patch<T.BillingProfile>(`/billing/profiles/${id}`, b),
+  archiveProfile: (id: number) => post<T.BillingProfile>(`/billing/profiles/${id}/archive`),
+  invoices: (p?: Q) => get<T.Page<T.Invoice>>("/billing/invoices", p),
+  prefill: (account_id: number) => get<T.InvoicePrefill>("/billing/invoices/prefill", { account_id }),
+  invoice: (id: number) => get<T.Invoice>(`/billing/invoices/${id}`),
+  create: (b: T.InvoiceInput) => post<T.Invoice>("/billing/invoices", b),
+  update: (id: number, b: Partial<T.InvoiceInput>) => patch<T.Invoice>(`/billing/invoices/${id}`, b),
+  remove: (id: number) => del(`/billing/invoices/${id}`),
+  issue: (id: number) => post<T.Invoice>(`/billing/invoices/${id}/issue`),
+  markPaid: (id: number) => post<T.Invoice>(`/billing/invoices/${id}/mark-paid`),
+  void: (id: number, reason?: string) => post<T.Invoice>(`/billing/invoices/${id}/void`, { reason: reason || null }),
+  duplicate: (id: number) => post<T.Invoice>(`/billing/invoices/${id}/duplicate`),
+  pdf: (id: number, filename: string) => download(`/billing/invoices/${id}/pdf`, filename),
+};
 export const campaignsApi = {
   list: (p?: Q) => get<T.Page<T.Campaign>>("/campaigns", p),
   get: (id: number) => get<T.Campaign>(`/campaigns/${id}`),

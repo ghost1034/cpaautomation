@@ -4,8 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@/components/firmcrm/lib/
 import { Link, useNavigate, useParams } from "@/components/firmcrm/lib/navigation";
 import { Archive, ArchiveRestore, Lock, Pencil, Plus, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/components/firmcrm/lib/auth";
-import { accountsApi, contactsApi, conflictsApi, engagementsApi, oppsApi } from "@/components/firmcrm/api";
-import type { Account, Contact, Engagement, Opportunity } from "@/components/firmcrm/api/types";
+import { accountsApi, billingApi, contactsApi, conflictsApi, engagementsApi, oppsApi } from "@/components/firmcrm/api";
+import type { Account, Contact, Engagement, Invoice, Opportunity } from "@/components/firmcrm/api/types";
+import { InvoiceStatusBadge } from "@/components/firmcrm/components/billing/InvoiceStatusBadge";
+import { formatAmount } from "@/components/firmcrm/lib/billingMath";
 import { Badge, Button, Card, DL, Empty, OverflowMenu, PageHeader, Spinner, Tabs, statusTone, type MenuItem } from "@/components/firmcrm/components/ui";
 import { DataTable, type Column } from "@/components/firmcrm/components/ui/DataTable";
 import { FormModal, type FormValues } from "@/components/firmcrm/components/ui/Form";
@@ -21,7 +23,7 @@ import { NewOpportunityModal } from "./OpportunitiesPage";
 import { ClearanceList } from "./ClearancePage";
 import { fmtDate, useMoney, titleCase } from "@/components/firmcrm/lib/format";
 
-type Tab = "overview" | "contacts" | "opportunities" | "activities" | "engagements" | "clearance";
+type Tab = "overview" | "contacts" | "opportunities" | "activities" | "engagements" | "invoices" | "clearance";
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -37,6 +39,7 @@ export default function AccountDetailPage() {
   const contacts = useQuery({ queryKey: ["contacts", { account_id: id }], queryFn: () => contactsApi.list({ account_id: id, limit: 200 }), select: (p) => p.items, enabled: loaded });
   const opps = useQuery({ queryKey: ["opps", { account_id: id }], queryFn: () => oppsApi.list({ account_id: id, status: "all", limit: 200 }), select: (p) => p.items, enabled: loaded });
   const engs = useQuery({ queryKey: ["engagements", { account_id: id }], queryFn: () => engagementsApi.list({ account_id: id, limit: 200 }), select: (p) => p.items, enabled: loaded });
+  const invoices = useQuery({ queryKey: ["invoices", { account_id: id }], queryFn: () => billingApi.invoices({ account_id: id, limit: 200 }), select: (p) => p.items, enabled: loaded });
   const checks = useQuery({ queryKey: ["checks", { account_id: id }], queryFn: () => conflictsApi.list({ account_id: id, limit: 100 }), select: (p) => p.items, enabled: loaded });
   const { atLeast } = useAuth();
   const archiveM = useMutation({ mutationFn: () => (acc.data!.is_archived ? accountsApi.restore(id) : accountsApi.archive(id)), onSuccess: (a) => { qc.invalidateQueries({ queryKey: ["account", id] }); qc.invalidateQueries({ queryKey: ["accounts"] }); toast(a.is_archived ? "Account archived" : "Account restored"); }, onError: error });
@@ -82,6 +85,14 @@ export default function AccountDetailPage() {
     { key: "pa", header: "Practice area", hideBelow: 1280, render: (o) => cellText(o.practice_area_name, 180) }, { key: "amt", header: "Amount", align: "right", width: "128px", render: (o) => cellMoney(o.amount) },
     { key: "prob", header: "Prob.", align: "right", width: "80px", render: (o) => <span className="font-normal">{o.probability}%</span> }, { key: "close", header: "Expected close", width: "120px", hideBelow: 1180, render: (o) => cellDate(o.expected_close) }, { key: "owner", header: "Owner", width: "160px", hideBelow: 1280, render: (o) => cellText(o.owner_name) },
   ];
+  const invoiceCols: Column<Invoice>[] = [
+    { key: "number", header: "Invoice", width: "120px", render: (i) => <span className="mono">{i.number ?? <span className="text-crm-sand-500">Draft</span>}</span> },
+    { key: "eng", header: "Engagement", render: (i) => cellText(i.engagement_name) },
+    { key: "issue", header: "Issued", width: "120px", render: (i) => cellDate(i.issue_date) },
+    { key: "due", header: "Due", width: "120px", render: (i) => cellDate(i.due_date) },
+    { key: "total", header: "Total", align: "right", width: "140px", render: (i) => <span className="num">{formatAmount(i.total, i.currency)}</span> },
+    { key: "status", header: "Status", width: "110px", render: (i) => <InvoiceStatusBadge status={i.status} /> },
+  ];
   const engCols: Column<Engagement>[] = [
     { key: "name", header: "Engagement", width: "280px", render: (e) => <NameCell name={e.name} sub={e.external_ref ? <span className="mono">{e.external_ref}</span> : null} /> },
     { key: "pa", header: "Practice area", hideBelow: 1280, render: (e) => cellText(e.practice_area_name, 180) }, { key: "partner", header: "Responsible partner", width: "160px", hideBelow: 1280, render: (e) => cellText(e.responsible_partner_name) },
@@ -99,7 +110,7 @@ export default function AccountDetailPage() {
           <OverflowMenu items={menu} size="md" label="More actions" />
         </>} />
       <FactsGrid facts={facts} />
-      <Tabs value={tab} onChange={setTab} tabs={[{ key: "overview", label: "Overview" }, { key: "contacts", label: "Contacts", count: contacts.data?.length }, { key: "opportunities", label: "Opportunities", count: opps.data?.length }, { key: "activities", label: "Activity" }, { key: "engagements", label: "Engagements", count: engs.data?.length }, { key: "clearance", label: "Clearance", count: checks.data?.length }]} />
+      <Tabs value={tab} onChange={setTab} tabs={[{ key: "overview", label: "Overview" }, { key: "contacts", label: "Contacts", count: contacts.data?.length }, { key: "opportunities", label: "Opportunities", count: opps.data?.length }, { key: "activities", label: "Activity" }, { key: "engagements", label: "Engagements", count: engs.data?.length }, { key: "invoices", label: "Invoices", count: invoices.data?.length }, { key: "clearance", label: "Clearance", count: checks.data?.length }]} />
       <div className="mt-5">
         {tab === "overview" && (
           <div className="grid grid-cols-1 lg:grid-cols-12 items-start gap-4">
@@ -120,6 +131,9 @@ export default function AccountDetailPage() {
           {engs.data && engs.data.length === 0
             ? <Empty title="No engagements yet" hint="Engagements are created automatically when an opportunity on this account is Closed Won." />
             : <DataTable rows={engs.data} columns={engCols} loading={engs.isLoading} twoLine empty="No engagements yet" />}
+        </Card>}
+        {tab === "invoices" && <Card title="Invoices" padded={false} actions={!a.is_archived && <Button size="sm" onClick={() => nav(`/billing/new?accountId=${id}`)}><Plus size={12} />New invoice</Button>}>
+          <DataTable rows={invoices.data} columns={invoiceCols} loading={invoices.isLoading} onRowClick={(i) => nav(`/billing/${i.id}`)} empty="No invoices for this account" />
         </Card>}
         {tab === "clearance" && <><p className="mb-4 text-[13px] leading-5 text-crm-sand-600">Manage the screening list and add companies in <Link to="/clearance">Clearance → Conflict companies</Link>.</p><ClearanceList checks={checks.data} loading={checks.isLoading} /></>}
       </div>

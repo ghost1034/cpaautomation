@@ -14,6 +14,7 @@ export const CAMPAIGN_KINDS = ["event", "webinar", "newsletter", "seminar", "spo
 export const CAMPAIGN_STATUSES = ["planned", "active", "completed"];
 export const MEMBER_STATUSES = ["invited", "registered", "attended", "responded", "no_show"];
 export const ENGAGEMENT_STATUSES = ["active", "completed", "on_hold", "terminated"];
+export const INVOICE_STATUSES = ["draft", "issued", "sent", "paid", "void"];
 export const RISK = ["low", "medium", "high"];
 export const ROLES = ["admin", "partner", "manager", "staff", "marketing"];
 export const DISCIPLINES = ["accounting", "legal", "advisory", "other"];
