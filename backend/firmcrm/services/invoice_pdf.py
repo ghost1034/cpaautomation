@@ -92,18 +92,26 @@ class _Renderer:
 
     def top_band(self):
         self.rect(BAND_X0, 53, BAND_X1, 20, self.accent)
-        if self.doc.get("draft"):
-            c = self.c
-            c.saveState()
-            c.setFillColor(colors.HexColor("#E8E8E8"))
-            c.setFont(self.bold, 96)
-            c.translate(PAGE_W / 2, PAGE_H / 2)
-            c.rotate(35)
-            c.drawCentredString(0, -30, "DRAFT")
-            c.restoreState()
+
+    def watermark(self):
+        # Drawn last on each page so it sits above the content; translucent so that content stays legible.
+        if not self.doc.get("draft"):
+            return
+        c = self.c
+        c.saveState()
+        c.setFillColor(colors.Color(0.6, 0.6, 0.6, alpha=0.25))
+        c.setFont(self.bold, 96)
+        c.translate(PAGE_W / 2, PAGE_H / 2)
+        c.rotate(35)
+        c.drawCentredString(0, -30, "DRAFT")
+        c.restoreState()
+
+    def end_page(self):
+        self.watermark()
+        self.c.showPage()
 
     def new_page(self):
-        self.c.showPage()
+        self.end_page()
         self.top_band()
 
     def table_header(self, top: float):
@@ -220,7 +228,7 @@ class _Renderer:
             table_end = 90
         end = self.terms(self.totals_and_wire(table_end))
         self.rect(BAND_X0, end + 22, BAND_X1, 72, self.accent)
-        self.c.showPage()
+        self.end_page()
         self.c.save()
         return self.buffer.getvalue()
 
