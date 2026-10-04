@@ -13,13 +13,14 @@ from firmcrm.core.db import get_db
 from firmcrm.core.deps import ROLE_RANK, at_least, get_current_user
 from firmcrm.core.errors import Forbidden
 from firmcrm.enums import InvoiceStatus
-from firmcrm.models import Account, BillingProfile, Engagement, Invoice, User
+from firmcrm.models import Account, BillingProfile, Engagement, Invoice, Opportunity, User
 from firmcrm.schemas import (
     FirmCrmBillingProfileCreate,
     FirmCrmBillingProfileOut,
     FirmCrmBillingProfileUpdate,
     FirmCrmInvoiceCreate,
     FirmCrmInvoiceDeliveryOut,
+    FirmCrmInvoiceFromOpportunityIn,
     FirmCrmInvoiceOut,
     FirmCrmInvoicePrefillOut,
     FirmCrmInvoiceSendIn,
@@ -27,7 +28,7 @@ from firmcrm.schemas import (
     FirmCrmInvoiceVoidIn,
     FirmCrmPage,
 )
-from firmcrm.services import billing
+from firmcrm.services import billing, visibility
 
 router = APIRouter(route_class=FirmCrmRoute, prefix="/billing", tags=["billing"])
 
@@ -96,11 +97,13 @@ def archive_profile(profile_id: int, db: Session = Depends(get_db), actor: User 
 def _out(db: Session, rows: list[Invoice]) -> list[FirmCrmInvoiceOut]:
     an = account_names(db, [i.account_id for i in rows])
     en = name_map(db, Engagement, [i.engagement_id for i in rows])
+    on = name_map(db, Opportunity, [i.opportunity_id for i in rows])
     pn = name_map(db, BillingProfile, [i.billing_profile_id for i in rows], "label")
     out = []
     for invoice in rows:
         d = FirmCrmInvoiceOut.model_validate(invoice)
         d.account_name, d.engagement_name, d.billing_profile_label = an.get(invoice.account_id), en.get(invoice.engagement_id), pn.get(invoice.billing_profile_id)
+        d.opportunity_name = on.get(invoice.opportunity_id)
         out.append(d)
     return out
 
@@ -111,7 +114,7 @@ def _can_manage(actor: User, invoice: Invoice) -> None:
 
 
 @router.get("/invoices", response_model=FirmCrmPage[FirmCrmInvoiceOut])
-def list_invoices(status: InvoiceStatus | None = None, account_id: int | None = None, q: str | None = Query(None, max_length=100),
+def list_invoices(status: InvoiceStatus | None = None, account_id: int | None = None, opportunity_id: int | None = None, q: str | None = Query(None, max_length=100),
                   sort: str | None = Query(None, max_length=40), dir: SortDir = "desc",
                   limit: int = Query(50, ge=1, le=500), offset: int = Query(0, ge=0), db: Session = Depends(get_db),
                   _: User = Depends(get_current_user)):
@@ -120,6 +123,8 @@ def list_invoices(status: InvoiceStatus | None = None, account_id: int | None = 
         stmt = stmt.where(Invoice.status == status)
     if account_id:
         stmt = stmt.where(Invoice.account_id == account_id)
+    if opportunity_id:
+        stmt = stmt.where(Invoice.opportunity_id == opportunity_id)
     if q:
         like = f"%{q.strip()}%"
         stmt = stmt.where(or_(Invoice.billed_to_name.ilike(like), Invoice.number.ilike(like)))
@@ -138,6 +143,16 @@ def prefill_invoice(account_id: int, db: Session = Depends(get_db), _: User = De
 @router.post("/invoices", response_model=FirmCrmInvoiceOut, status_code=201)
 def create_invoice(body: FirmCrmInvoiceCreate, db: Session = Depends(get_db), actor: User = Depends(get_current_user)):
     invoice = billing.create_draft(db, actor, body.model_dump())
+    db.commit()
+    return _out(db, [invoice])[0]
+
+
+@router.post("/invoices/from-opportunity/{opportunity_id}", response_model=FirmCrmInvoiceOut, status_code=201)
+def create_invoice_from_opportunity(opportunity_id: int, body: FirmCrmInvoiceFromOpportunityIn | None = None, db: Session = Depends(get_db),
+                                    actor: User = Depends(get_current_user)):
+    opportunity = get_or_404(db, Opportunity, opportunity_id, "Opportunity")
+    visibility.assert_opportunity_visible(db, actor, opportunity)
+    invoice = billing.create_from_opportunity(db, actor, opportunity, body.billing_profile_id if body else None)
     db.commit()
     return _out(db, [invoice])[0]
 

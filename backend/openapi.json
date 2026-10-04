@@ -42595,6 +42595,22 @@
             }
           },
           {
+            "name": "opportunity_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Opportunity Id"
+            }
+          },
+          {
             "name": "q",
             "in": "query",
             "required": false,
@@ -42846,6 +42862,111 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FirmCrmInvoicePrefillOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmCrmError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmCrmError"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmCrmError"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmCrmError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmCrmError"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        }
+      }
+    },
+    "/api/firmcrm/billing/invoices/from-opportunity/{opportunity_id}": {
+      "post": {
+        "tags": [
+          "firmcrm",
+          "billing"
+        ],
+        "summary": "Create Invoice From Opportunity",
+        "operationId": "create_invoice_from_opportunity_api_firmcrm_billing_invoices_from_opportunity__opportunity_id__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "opportunity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Opportunity Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/FirmCrmInvoiceFromOpportunityIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmCrmInvoiceOut"
                 }
               }
             }
@@ -62214,6 +62335,17 @@
             ],
             "title": "Engagement Id"
           },
+          "opportunity_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opportunity Id"
+          },
           "billed_to_name": {
             "type": "string",
             "maxLength": 200,
@@ -62394,6 +62526,23 @@
         ],
         "title": "FirmCrmInvoiceDeliveryOut"
       },
+      "FirmCrmInvoiceFromOpportunityIn": {
+        "properties": {
+          "billing_profile_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Profile Id"
+          }
+        },
+        "type": "object",
+        "title": "FirmCrmInvoiceFromOpportunityIn"
+      },
       "FirmCrmInvoiceLineIn": {
         "properties": {
           "description": {
@@ -62533,6 +62682,17 @@
               }
             ],
             "title": "Engagement Id"
+          },
+          "opportunity_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opportunity Id"
           },
           "billed_to_name": {
             "type": "string",
@@ -62745,6 +62905,17 @@
             ],
             "title": "Engagement Name"
           },
+          "opportunity_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opportunity Name"
+          },
           "billing_profile_label": {
             "anyOf": [
               {
@@ -62907,6 +63078,17 @@
               }
             ],
             "title": "Engagement Id"
+          },
+          "opportunity_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opportunity Id"
           },
           "billed_to_name": {
             "anyOf": [

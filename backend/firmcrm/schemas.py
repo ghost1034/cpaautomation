@@ -697,6 +697,7 @@ class FirmCrmInvoiceCreate(BaseModel):
     billing_profile_id: int
     account_id: int | None = None
     engagement_id: int | None = None
+    opportunity_id: int | None = None
     billed_to_name: Annotated[str, Field(min_length=1, max_length=200)]
     billed_to_address: Annotated[str, Field(max_length=1000)] | None = None
     billed_to_email: EmailStr | None = None
@@ -709,11 +710,16 @@ class FirmCrmInvoiceCreate(BaseModel):
     lines: list[FirmCrmInvoiceLineIn] = Field(default_factory=list, max_length=200)
 
 
+class FirmCrmInvoiceFromOpportunityIn(BaseModel):
+    billing_profile_id: int | None = None  # defaults to the firm's default billing profile
+
+
 class FirmCrmInvoiceUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     billing_profile_id: int | None = None
     account_id: int | None = None
     engagement_id: int | None = None
+    opportunity_id: int | None = None
     billed_to_name: Annotated[str, Field(min_length=1, max_length=200)] | None = None
     billed_to_address: Annotated[str, Field(max_length=1000)] | None = None
     billed_to_email: EmailStr | None = None
@@ -744,6 +750,7 @@ class FirmCrmInvoiceOut(FirmCrmORM):
     billing_profile_id: int
     account_id: int | None = None
     engagement_id: int | None = None
+    opportunity_id: int | None = None
     billed_to_name: str
     billed_to_address: str | None = None
     billed_to_email: str | None = None
@@ -766,6 +773,7 @@ class FirmCrmInvoiceOut(FirmCrmORM):
     updated_at: datetime
     account_name: str | None = None
     engagement_name: str | None = None
+    opportunity_name: str | None = None
     billing_profile_label: str | None = None
     lines: list[FirmCrmInvoiceLineOut] = Field(default_factory=list)
     deliveries: list[FirmCrmInvoiceDeliveryOut] = Field(default_factory=list)

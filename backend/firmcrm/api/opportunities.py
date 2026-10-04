@@ -24,7 +24,7 @@ from firmcrm.core.audit import record
 from firmcrm.core.db import get_db
 from firmcrm.core.deps import at_least, get_current_user, require_role
 from firmcrm.core.errors import DomainError
-from firmcrm.models import Account, Opportunity, Pipeline, PracticeArea, Stage, StageHistory, User, utcnow
+from firmcrm.models import Account, Invoice, Opportunity, Pipeline, PracticeArea, Stage, StageHistory, User, utcnow
 from firmcrm.schemas import FirmCrmOpportunityCreate, FirmCrmOpportunityOut, FirmCrmOpportunityUpdate, FirmCrmPage, FirmCrmStageChangeIn, FirmCrmStageHistoryOut
 from firmcrm.services import conflicts, visibility
 from firmcrm.services import opportunities as opp_svc
@@ -200,6 +200,10 @@ def purge_opportunity(opp_id: int, db: Session = Depends(get_db), actor: User = 
     o = get_visible(db, actor, opp_id)
     if o.status == "won":
         raise DomainError("Won opportunities cannot be deleted", code="won")
+    with db.include_restricted():  # an invoice hidden from the actor still blocks deletion
+        has_invoices = db.scalar(select(Invoice.id).where(Invoice.opportunity_id == o.id).limit(1)) is not None
+    if has_invoices:
+        raise DomainError("Opportunities with invoices cannot be deleted; archive it instead", code="has_invoices")
     record(db, actor_id=actor.id, action="opportunity.purge", entity_type="opportunity", entity_id=o.id, before={"name": o.name})
     db.delete(o)
     db.commit()

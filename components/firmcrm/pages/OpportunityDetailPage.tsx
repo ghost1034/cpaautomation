@@ -1,9 +1,9 @@
 import { useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@/components/firmcrm/lib/query";
 import { Link, useNavigate, useParams } from "@/components/firmcrm/lib/navigation";
-import { Archive, ArchiveRestore, Check, ChevronDown, Lock, Pencil, RotateCcw, ShieldCheck, ShieldOff, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Check, ChevronDown, Lock, Pencil, Plus, Receipt, RotateCcw, ShieldCheck, ShieldOff, Trash2 } from "lucide-react";
 import type { TimelineEvent } from "@/components/firmcrm/components/crm/ActivityTimeline";
-import { conflictsApi, oppsApi } from "@/components/firmcrm/api";
+import { billingApi, conflictsApi, oppsApi } from "@/components/firmcrm/api";
 import type { Opportunity, Stage } from "@/components/firmcrm/api/types";
 import { Badge, Button, Card, DL, Drawer, Field, Input, OverflowMenu, PageHeader, Select, Spinner, Textarea, cn, statusTone, type MenuItem } from "@/components/firmcrm/components/ui";
 import { FormModal, type FormValues } from "@/components/firmcrm/components/ui/Form";
@@ -13,6 +13,8 @@ import { ActivityTimeline } from "@/components/firmcrm/components/crm/ActivityTi
 import { WallPanel, useWall } from "@/components/firmcrm/components/crm/WallPanel";
 import { StageRail } from "@/components/firmcrm/components/crm/StageRail";
 import { isPastDue } from "@/components/firmcrm/components/crm/KanbanCard";
+import { InvoiceStatusBadge } from "@/components/firmcrm/components/billing/InvoiceStatusBadge";
+import { formatAmount } from "@/components/firmcrm/lib/billingMath";
 import { ClearanceList } from "./ClearancePage";
 import { useOpportunityFields } from "./OpportunitiesPage";
 import { usePipelines, strOpts } from "@/components/firmcrm/lib/hooks";
@@ -82,6 +84,7 @@ export default function OpportunityDetailPage() {
   // Dependent queries wait for the record so a 404 (deleted or walled) does not fan out into three more 404s.
   const hist = useQuery({ queryKey: ["opp", id, "history"], queryFn: () => oppsApi.history(id), enabled: !!opp.data });
   const checks = useQuery({ queryKey: ["checks", { opportunity_id: id }], queryFn: () => conflictsApi.list({ opportunity_id: id, limit: 100 }), select: (p) => p.items, enabled: !!opp.data });
+  const invoices = useQuery({ queryKey: ["invoices", { opportunity_id: id }], queryFn: () => billingApi.invoices({ opportunity_id: id, limit: 100 }), select: (p) => p.items, enabled: !!opp.data });
   const pipelines = usePipelines();
   const fields = useOpportunityFields(opp.data?.account_id);
   const refresh = () => { qc.invalidateQueries({ queryKey: ["opp", id] }); qc.invalidateQueries({ queryKey: ["opps"] }); qc.invalidateQueries({ queryKey: ["dashboard"] }); qc.invalidateQueries({ queryKey: ["account"] }); };
@@ -89,6 +92,7 @@ export default function OpportunityDetailPage() {
   const reopen = useMutation({ mutationFn: (stage_id: number) => oppsApi.reopen(id, stage_id), onSuccess: () => { refresh(); toast("Reopened"); }, onError: error });
   const remove = useMutation({ mutationFn: () => oppsApi.purge(id), onSuccess: () => { refresh(); nav("/opportunities"); }, onError: error });
   const archiveM = useMutation({ mutationFn: () => (opp.data!.is_archived ? oppsApi.restore(id) : oppsApi.archive(id)), onSuccess: (o) => { refresh(); toast(o.is_archived ? "Archived" : "Restored"); }, onError: error });
+  const invoiceM = useMutation({ mutationFn: () => billingApi.fromOpportunity(id), onSuccess: (i) => { qc.invalidateQueries({ queryKey: ["invoices"] }); toast("Draft invoice created"); nav(`/billing/${i.id}`); }, onError: error });
   const quick = useMutation({ mutationFn: (b: Partial<Opportunity>) => oppsApi.update(id, b), onSuccess: refresh, onError: error });
   const wall = useWall("opportunity", id, !!opp.data);
   if (opp.isError) return <div className="card max-w-[560px] p-6 text-[13px] leading-5"><div className="font-semibold text-crm-sand-900">Opportunity not found</div><div className="mt-1 text-crm-sand-500">It may have been removed, or access is restricted by an ethical wall.</div><Link to="/opportunities" className="mt-3 inline-block text-[12px] font-medium">← Back to opportunities</Link></div>;
@@ -215,6 +219,20 @@ export default function OpportunityDetailPage() {
                 <span className="text-crm-sand-600">{gateOk ? "Gate satisfied." : o.clearance_status ? "Closed Won is blocked until cleared or waived." : "No check run yet. Required before Closed Won."}</span>
               </div>)}
             <ClearanceList checks={checks.data} loading={checks.isLoading} compact />
+          </Card>
+          <Card title={<span className="inline-flex items-center gap-1.5"><Receipt size={14} className="text-crm-sand-500" />Invoices</span>}
+                actions={o.status !== "lost" && <Button size="sm" onClick={() => invoiceM.mutate()} disabled={invoiceM.isPending}><Plus size={12} />New invoice</Button>}>
+            {invoices.isLoading ? <Spinner /> : !invoices.data?.length
+              ? <div className="text-[12px] leading-4 text-crm-sand-500">{o.status === "lost" ? "Lost opportunities cannot be billed." : `No invoices yet. New invoice drafts one for ${money(o.amount)}, billed to ${o.account_name}.`}</div>
+              : <ul className="divide-y divide-crm-sand-100 text-[13px] leading-5">
+                  {invoices.data.map((i) => (
+                    <li key={i.id}><Link to={`/billing/${i.id}`} className="flex items-center justify-between gap-3 py-2">
+                      <span className="mono">{i.number ?? <span className="text-crm-sand-500">Draft</span>}</span>
+                      <span className="ml-auto num">{formatAmount(i.total, i.currency)}</span>
+                      <InvoiceStatusBadge status={i.status} />
+                    </Link></li>
+                  ))}
+                </ul>}
           </Card>
           <WallPanel entityType="opportunity" id={id} entityName={o.name} />
         </div>

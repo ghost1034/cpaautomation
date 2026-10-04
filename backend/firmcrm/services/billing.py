@@ -13,7 +13,8 @@ from sqlalchemy.orm import Session
 
 from firmcrm.core.audit import record
 from firmcrm.core.errors import Conflict, DomainError, NotFound
-from firmcrm.models import Account, BillingProfile, Contact, Engagement, FirmCrmSettings, Invoice, InvoiceDelivery, InvoiceLine, User, utcnow
+from firmcrm.models import (Account, BillingProfile, Contact, Engagement, FirmCrmSettings, Invoice, InvoiceDelivery, InvoiceLine,
+                            Opportunity, User, utcnow)
 from firmcrm.services.invoice_pdf import format_date, format_money, render_invoice_pdf
 from services.pdf_common import CENTS
 
@@ -44,7 +45,7 @@ def apply_lines(invoice: Invoice, lines: list[dict[str, Any]]) -> None:
     invoice.total = subtotal
 
 
-def _validate_links(db: Session, account_id: int | None, engagement_id: int | None) -> None:
+def _validate_links(db: Session, account_id: int | None, engagement_id: int | None, opportunity_id: int | None = None) -> None:
     if account_id is not None and db.get(Account, account_id) is None:
         raise NotFound("Account not found")
     if engagement_id is not None:
@@ -53,6 +54,12 @@ def _validate_links(db: Session, account_id: int | None, engagement_id: int | No
             raise NotFound("Engagement not found")
         if account_id is not None and engagement.account_id != account_id:
             raise Conflict("Engagement and account must match")
+    if opportunity_id is not None:
+        opportunity = db.get(Opportunity, opportunity_id)
+        if opportunity is None:
+            raise NotFound("Opportunity not found")
+        if account_id is not None and opportunity.account_id != account_id:
+            raise Conflict("Opportunity and account must match")
 
 
 def _active_profile(db: Session, profile_id: int) -> BillingProfile:
@@ -94,7 +101,7 @@ def default_profile(db: Session) -> BillingProfile | None:
 
 def create_draft(db: Session, actor: User, data: dict[str, Any]) -> Invoice:
     profile = _active_profile(db, data["billing_profile_id"])
-    _validate_links(db, data.get("account_id"), data.get("engagement_id"))
+    _validate_links(db, data.get("account_id"), data.get("engagement_id"), data.get("opportunity_id"))
     lines = data.pop("lines", [])
     invoice = Invoice(**data, status="draft", created_by_id=actor.id)
     if not invoice.terms_text:
@@ -114,7 +121,8 @@ def update_draft(db: Session, actor: User, invoice: Invoice, data: dict[str, Any
         _active_profile(db, data["billing_profile_id"])
     account_id = data.get("account_id", invoice.account_id)
     engagement_id = data.get("engagement_id", invoice.engagement_id)
-    _validate_links(db, account_id, engagement_id)
+    opportunity_id = data.get("opportunity_id", invoice.opportunity_id)
+    _validate_links(db, account_id, engagement_id, opportunity_id)
     lines = data.pop("lines", None)
     before = {}
     for key, value in data.items():
@@ -144,10 +152,30 @@ def duplicate(db: Session, actor: User, invoice: Invoice) -> Invoice:
         profile = default_profile(db)
         if profile is None:
             raise DomainError("Create a billing profile first", code="no_billing_profile")
-    data = {k: getattr(invoice, k) for k in ("account_id", "engagement_id", "billed_to_name", "billed_to_address",
+    data = {k: getattr(invoice, k) for k in ("account_id", "engagement_id", "opportunity_id", "billed_to_name", "billed_to_address",
                                               "billed_to_email", "billed_to_cc", "currency", "notes")}
     data["billing_profile_id"] = profile.id
     data["lines"] = [{"description": l.description, "unit_cost": l.unit_cost, "quantity": l.quantity} for l in invoice.lines]
+    return create_draft(db, actor, data)
+
+
+def create_from_opportunity(db: Session, actor: User, opportunity: Opportunity, billing_profile_id: int | None = None) -> Invoice:
+    """Draft an invoice for an opportunity: billed to its account, linked to its engagement once won, and one line for the fee."""
+    if opportunity.status == "lost":
+        raise Conflict("Lost opportunities cannot be billed", code="opportunity_lost")
+    profile = _active_profile(db, billing_profile_id) if billing_profile_id is not None else default_profile(db)
+    if profile is None:
+        raise DomainError("Create a billing profile first", code="no_billing_profile")
+    data: dict[str, Any] = prefill_from_account(db, db.get(Account, opportunity.account_id))
+    contact = db.get(Contact, opportunity.primary_contact_id) if opportunity.primary_contact_id else None
+    if contact is not None and contact.email and contact.account_id == opportunity.account_id:
+        data["billed_to_email"] = contact.email
+    engagement = db.scalars(select(Engagement).where(Engagement.opportunity_id == opportunity.id)).first()
+    settings = db.get(FirmCrmSettings, db.info["firm_id"])
+    amount = Decimal(str(opportunity.amount or 0)).quantize(CENTS, rounding=ROUND_HALF_UP)
+    data.update(billing_profile_id=profile.id, opportunity_id=opportunity.id, engagement_id=engagement.id if engagement else None,
+                currency=(settings.default_currency if settings and settings.default_currency else "USD"),
+                lines=[{"description": opportunity.name[:500], "unit_cost": amount, "quantity": Decimal("1")}])
     return create_draft(db, actor, data)
 
 

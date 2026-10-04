@@ -82,6 +82,7 @@ export const billingApi = {
   prefill: (account_id: number) => get<T.InvoicePrefill>("/billing/invoices/prefill", { account_id }),
   invoice: (id: number) => get<T.Invoice>(`/billing/invoices/${id}`),
   create: (b: T.InvoiceInput) => post<T.Invoice>("/billing/invoices", b),
+  fromOpportunity: (opportunityId: number) => post<T.Invoice>(`/billing/invoices/from-opportunity/${opportunityId}`),
   update: (id: number, b: Partial<T.InvoiceInput>) => patch<T.Invoice>(`/billing/invoices/${id}`, b),
   remove: (id: number) => del(`/billing/invoices/${id}`),
   issue: (id: number) => post<T.Invoice>(`/billing/invoices/${id}/issue`),

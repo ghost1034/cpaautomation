@@ -17,19 +17,19 @@ import { useAuth, useCrmContext } from "@/components/firmcrm/lib/auth";
 import { fmtDateTime, titleCase } from "@/components/firmcrm/lib/format";
 
 type Draft = {
-  billing_profile_id: number | null; account_id: number | null; engagement_id: number | null;
+  billing_profile_id: number | null; account_id: number | null; engagement_id: number | null; opportunity_id: number | null;
   billed_to_name: string; billed_to_address: string; billed_to_email: string; billed_to_cc: string;
   issue_date: string; due_date: string; terms_text: string; currency: string; notes: string; lines: LineDraft[];
 };
 
 const fromInvoice = (i: Invoice): Draft => ({
-  billing_profile_id: i.billing_profile_id, account_id: i.account_id ?? null, engagement_id: i.engagement_id ?? null,
+  billing_profile_id: i.billing_profile_id, account_id: i.account_id ?? null, engagement_id: i.engagement_id ?? null, opportunity_id: i.opportunity_id ?? null,
   billed_to_name: i.billed_to_name, billed_to_address: i.billed_to_address ?? "", billed_to_email: i.billed_to_email ?? "", billed_to_cc: i.billed_to_cc ?? "",
   issue_date: i.issue_date ?? "", due_date: i.due_date ?? "", terms_text: i.terms_text ?? "", currency: i.currency, notes: i.notes ?? "",
   lines: (i.lines ?? []).map((l) => newLine({ description: l.description, unit_cost: l.unit_cost, quantity: String(Number(l.quantity)) })),
 });
 const toBody = (d: Draft): InvoiceInput => ({
-  billing_profile_id: d.billing_profile_id!, account_id: d.account_id, engagement_id: d.engagement_id,
+  billing_profile_id: d.billing_profile_id!, account_id: d.account_id, engagement_id: d.engagement_id, opportunity_id: d.opportunity_id,
   billed_to_name: d.billed_to_name.trim(), billed_to_address: d.billed_to_address.trim() || null, billed_to_email: d.billed_to_email.trim() || null,
   billed_to_cc: d.billed_to_cc.trim() || null, issue_date: d.issue_date || null, due_date: d.due_date || null, terms_text: d.terms_text.trim() || null,
   currency: d.currency.trim().toUpperCase() || "USD", notes: d.notes.trim() || null,
@@ -65,7 +65,7 @@ export default function InvoiceEditorPage() {
     }
     if (id == null && profiles.data && !draft) {
       const p = profiles.data.find((x) => x.is_default) ?? profiles.data[0];
-      const d: Draft = { billing_profile_id: p?.id ?? null, account_id: null, engagement_id: null, billed_to_name: "", billed_to_address: "", billed_to_email: "", billed_to_cc: "",
+      const d: Draft = { billing_profile_id: p?.id ?? null, account_id: null, engagement_id: null, opportunity_id: null, billed_to_name: "", billed_to_address: "", billed_to_email: "", billed_to_cc: "",
         issue_date: "", due_date: "", terms_text: p?.default_terms_text ?? "", currency: settings.default_currency || "USD", notes: "", lines: [newLine()] };
       setDraft(d); setBaseline(snapshot(d));
       const accountId = Number(new URLSearchParams(window.location.search).get("accountId"));
@@ -84,7 +84,7 @@ export default function InvoiceEditorPage() {
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => (d ? { ...d, [k]: v } : d));
 
   async function pickAccount(accountId: number | null, base?: Draft) {
-    setDraft((d) => { const cur = d ?? base!; return { ...cur, account_id: accountId, engagement_id: null }; });
+    setDraft((d) => { const cur = d ?? base!; return { ...cur, account_id: accountId, engagement_id: null, opportunity_id: accountId === cur.account_id ? cur.opportunity_id : null }; });
     if (!accountId) return;
     try {
       const pre = await billingApi.prefill(accountId);
@@ -163,7 +163,7 @@ export default function InvoiceEditorPage() {
     <div>
       <PageHeader
         title={<>{i?.number ? `Invoice ${i.number}` : id == null ? "New invoice" : "Draft invoice"}{i && <InvoiceStatusBadge status={i.status} />}</>}
-        subtitle={<><Link to="/billing">Billing</Link>{i?.account_id && <> · <Link to={`/accounts/${i.account_id}`}>{i.account_name}</Link></>}{i?.void_reason && <> · Voided: {i.void_reason}</>}{dirty && <> · Unsaved changes</>}</>}
+        subtitle={<><Link to="/billing">Billing</Link>{i?.account_id && <> · <Link to={`/accounts/${i.account_id}`}>{i.account_name}</Link></>}{i?.opportunity_id && draft.opportunity_id === i.opportunity_id && <> · <Link to={`/opportunities/${i.opportunity_id}`}>{i.opportunity_name}</Link></>}{i?.void_reason && <> · Voided: {i.void_reason}</>}{dirty && <> · Unsaved changes</>}</>}
         actions={<>
           {editable && <Button onClick={() => save()} disabled={busy || (id != null && !dirty)}><Save size={14} />{id == null ? "Save draft" : "Save"}</Button>}
           <Button onClick={downloadPdf} disabled={busy}><Download size={14} />{status === "draft" ? "Preview PDF" : "Download PDF"}</Button>

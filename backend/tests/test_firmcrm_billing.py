@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from firmcrm import models as m
 from firmcrm.lifecycle import export_firm_crm
 from services.email_service import email_service
-from test_firmcrm import account, call, crm, wall  # noqa: F401  (crm is a fixture)
+from test_firmcrm import account, call, crm, opportunity, wall  # noqa: F401  (crm is a fixture)
 
 PROFILE = {
     'label': 'Operating account', 'issuer_name': 'CPA Automation, Inc.', 'address_line1': '2258 21ST AVE',
@@ -176,3 +176,62 @@ def test_send_records_delivery_without_false_success(crm, monkeypatch, outcome):
         assert len(sent) == 1  # copies are not sent when the primary delivery fails
     assert after['deliveries'][0]['status'] == delivery['status']
     call(crm, 'post', f'/billing/invoices/{invoice["id"]}/send', 'staff', 403, json={'to': 'ap@sb.example'})
+
+
+def test_invoice_from_opportunity_prefills_draft(crm):
+    a = call(crm, 'post', '/accounts', expected=201, json={'name': 'SB Investment Advisers (US) Inc.', 'address': '300 El Camino Real',
+                                                          'city': 'Menlo Park', 'state': 'California', 'postal_code': '94025'})
+    contact = call(crm, 'post', '/contacts', expected=201, json={'first_name': 'Ada', 'last_name': 'Payable', 'email': 'ap@sb.example',
+                                                                 'account_id': a['id']})
+    o = opportunity(crm, a, name='2026 audit', amount=12500.5, primary_contact_id=contact['id'], engagement_letter_status='signed')
+    path = f'/billing/invoices/from-opportunity/{o["id"]}'
+    call(crm, 'post', path, expected=400)  # no billing profile yet
+    p = profile(crm)
+
+    invoice = call(crm, 'post', path, 'staff', 201)
+    assert invoice['status'] == 'draft' and invoice['billing_profile_id'] == p['id']
+    assert invoice['opportunity_id'] == o['id'] and invoice['opportunity_name'] == '2026 audit'
+    assert invoice['account_id'] == a['id'] and invoice['engagement_id'] is None
+    assert invoice['billed_to_name'] == 'SB Investment Advisers (US) Inc.' and invoice['billed_to_email'] == 'ap@sb.example'
+    assert [(l['description'], Decimal(l['unit_cost']), Decimal(l['quantity'])) for l in invoice['lines']] == [('2026 audit', Decimal('12500.50'), Decimal('1'))]
+    assert Decimal(invoice['total']) == Decimal('12500.50')
+    assert call(crm, 'get', f'/billing/invoices?opportunity_id={o["id"]}')['total'] == 1
+
+    # Once won, the generated invoice links the engagement created at Closed Won.
+    won = next(s['id'] for s in call(crm, 'get', '/pipelines')[0]['stages'] if s['is_won'])
+    call(crm, 'post', f'/opportunities/{o["id"]}/stage', json={'stage_id': won})
+    engagement = call(crm, 'get', f'/engagements?account_id={a["id"]}')['items'][0]
+    assert call(crm, 'post', path, expected=201)['engagement_id'] == engagement['id']
+
+    # Duplicates keep the link; the link must match the account.
+    assert call(crm, 'post', f'/billing/invoices/{invoice["id"]}/duplicate', expected=201)['opportunity_id'] == o['id']
+    other = account(crm, 'Other')
+    call(crm, 'patch', f'/billing/invoices/{invoice["id"]}', expected=409, json={'account_id': other['id']})
+
+
+def test_invoice_from_opportunity_rules(crm):
+    a = account(crm)
+    profile(crm)
+    o = opportunity(crm, a)
+    call(crm, 'post', f'/billing/invoices/from-opportunity/{o["id"]}', 'other', 404)
+    call(crm, 'post', f'/billing/invoices/from-opportunity/{o["id"]}', expected=201)
+    # Invoiced opportunities cannot be purged.
+    assert call(crm, 'delete', f'/opportunities/{o["id"]}', expected=400)['code'] == 'has_invoices'
+    lost_opp = opportunity(crm, a, name='Lost pursuit')
+    lost = next(s['id'] for s in call(crm, 'get', '/pipelines')[0]['stages'] if s['is_lost'])
+    call(crm, 'post', f'/opportunities/{lost_opp["id"]}/stage', json={'stage_id': lost, 'lost_reason': 'price'})
+    assert call(crm, 'post', f'/billing/invoices/from-opportunity/{lost_opp["id"]}', expected=409)['code'] == 'opportunity_lost'
+
+
+def test_walled_opportunity_invoices_are_hidden(crm):
+    a = account(crm, 'Visible client')
+    profile(crm)
+    o = opportunity(crm, a)
+    invoice = call(crm, 'post', f'/billing/invoices/from-opportunity/{o["id"]}', expected=201)
+    wall(crm, o, 'opportunity')
+    call(crm, 'patch', '/settings', json={'admin_bypasses_walls': False})
+    call(crm, 'delete', '/walls/1/members/admin')
+    assert call(crm, 'get', '/billing/invoices', 'manager')['total'] == 0
+    call(crm, 'get', f'/billing/invoices/{invoice["id"]}', 'manager', 404)
+    call(crm, 'post', f'/billing/invoices/from-opportunity/{o["id"]}', 'manager', 404)
+    assert call(crm, 'get', f'/billing/invoices/{invoice["id"]}', 'partner')['opportunity_id'] == o['id']

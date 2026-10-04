@@ -10457,6 +10457,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/firmcrm/billing/invoices/from-opportunity/{opportunity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Invoice From Opportunity */
+        post: operations["create_invoice_from_opportunity_api_firmcrm_billing_invoices_from_opportunity__opportunity_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/firmcrm/billing/invoices/{invoice_id}": {
         parameters: {
             query?: never;
@@ -16330,6 +16347,8 @@ export interface components {
             account_id?: number | null;
             /** Engagement Id */
             engagement_id?: number | null;
+            /** Opportunity Id */
+            opportunity_id?: number | null;
             /** Billed To Name */
             billed_to_name: string;
             /** Billed To Address */
@@ -16376,6 +16395,11 @@ export interface components {
              */
             created_at: string;
         };
+        /** FirmCrmInvoiceFromOpportunityIn */
+        FirmCrmInvoiceFromOpportunityIn: {
+            /** Billing Profile Id */
+            billing_profile_id?: number | null;
+        };
         /** FirmCrmInvoiceLineIn */
         FirmCrmInvoiceLineIn: {
             /** Description */
@@ -16420,6 +16444,8 @@ export interface components {
             account_id?: number | null;
             /** Engagement Id */
             engagement_id?: number | null;
+            /** Opportunity Id */
+            opportunity_id?: number | null;
             /** Billed To Name */
             billed_to_name: string;
             /** Billed To Address */
@@ -16472,6 +16498,8 @@ export interface components {
             account_name?: string | null;
             /** Engagement Name */
             engagement_name?: string | null;
+            /** Opportunity Name */
+            opportunity_name?: string | null;
             /** Billing Profile Label */
             billing_profile_label?: string | null;
             /** Lines */
@@ -16512,6 +16540,8 @@ export interface components {
             account_id?: number | null;
             /** Engagement Id */
             engagement_id?: number | null;
+            /** Opportunity Id */
+            opportunity_id?: number | null;
             /** Billed To Name */
             billed_to_name?: string | null;
             /** Billed To Address */
@@ -47465,6 +47495,7 @@ export interface operations {
             query?: {
                 status?: ("draft" | "issued" | "sent" | "paid" | "void") | null;
                 account_id?: number | null;
+                opportunity_id?: number | null;
                 q?: string | null;
                 sort?: string | null;
                 dir?: "asc" | "desc";
@@ -47620,6 +47651,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FirmCrmInvoicePrefillOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmError"];
+                };
+            };
+        };
+    };
+    create_invoice_from_opportunity_api_firmcrm_billing_invoices_from_opportunity__opportunity_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["FirmCrmInvoiceFromOpportunityIn"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FirmCrmInvoiceOut"];
                 };
             };
             /** @description Bad Request */

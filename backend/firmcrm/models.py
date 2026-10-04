@@ -487,6 +487,8 @@ class FirmCrmInvoice(Base, FirmMixin, TimestampMixin):
     billing_profile_id: Mapped[int] = mapped_column(ForeignKey("firmcrm_billing_profiles.id"))
     account_id: Mapped[int | None] = mapped_column(ForeignKey("firmcrm_accounts.id"), index=True)
     engagement_id: Mapped[int | None] = mapped_column(ForeignKey("firmcrm_engagements.id"))
+    opportunity_id: Mapped[int | None] = mapped_column(
+        ForeignKey("firmcrm_opportunities.id", name="firmcrm_fk_invoices_opportunity_id_opportunities"), index=True)
     billed_to_name: Mapped[str] = mapped_column(String(200))
     billed_to_address: Mapped[str | None] = mapped_column(Text)
     billed_to_email: Mapped[str | None] = mapped_column(String(255))

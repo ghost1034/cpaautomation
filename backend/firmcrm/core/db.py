@@ -63,7 +63,7 @@ def refresh_visibility(db: CrmSession):
     hidden.update(account=ha, opportunity=ho, contact=hc, lead=hl)
     for model, kind in [(m.Engagement,'engagement'), (m.Activity,'activity'), (m.ConflictCheck,'conflict_check'), (m.StageHistory,'stage_history'), (m.CampaignMember,'campaign_member'), (m.AuditLog,'audit_log')]:
         hidden[kind] = {r['id'] for r in rows(model) if r.get('account_id') in ha or r.get('opportunity_id') in ho or r.get('contact_id') in hc or r.get('lead_id') in hl}
-    hidden['invoice'] = {r['id'] for r in rows(m.Invoice) if r['account_id'] in ha or r['engagement_id'] in hidden['engagement']}
+    hidden['invoice'] = {r['id'] for r in rows(m.Invoice) if r['account_id'] in ha or r['opportunity_id'] in ho or r['engagement_id'] in hidden['engagement']}
     for model, kind in [(m.InvoiceLine,'invoice_line'), (m.InvoiceDelivery,'invoice_delivery')]:
         hidden[kind] = {r['id'] for r in rows(model) if r['invoice_id'] in hidden['invoice']}
     hidden['ethical_wall'] = {r['id'] for r in walls if (r['entity_type']=='account' and r['entity_id'] in ha) or (r['entity_type']=='opportunity' and r['entity_id'] in ho)}
