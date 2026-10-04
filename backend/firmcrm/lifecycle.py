@@ -31,7 +31,8 @@ def export_firm_crm(db, firm_id, actor_user_id):
         for model in m.CRM_MODELS:
             values=[]
             for row in crm.scalars(select(model)).all():
-                data = {column.name:getattr(row,column.name) for column in model.__table__.columns}
+                # Encrypted bank details never leave the database in an export.
+                data = {column.name:getattr(row,column.name) for column in model.__table__.columns if not column.name.endswith('_ciphertext')}
                 if isinstance(row,m.ConflictCheck):
                     data['matches'] = redact_matches(crm,actor,row.matches)
                 values.append(data)
@@ -45,6 +46,6 @@ def purge_firm_crm(db, firm_id):
     # Break nullable cycles first, then delete children before referenced rows.
     db.execute(update(m.Account.__table__).where(m.Account.firm_id == firm_id).values(referral_contact_id=None,referral_account_id=None))
     db.execute(update(m.Lead.__table__).where(m.Lead.firm_id == firm_id).values(converted_opportunity_id=None,converted_account_id=None,converted_contact_id=None))
-    order=[m.AuditLog,m.ImportJob,m.EthicalWallMember,m.EthicalWall,m.StageHistory,m.ConflictCheck,m.Activity,m.CampaignMember,m.Engagement,m.Lead,m.Opportunity,m.Contact,m.Account,m.Campaign,m.User,m.Stage,m.Pipeline,m.PracticeArea,m.FirmCrmSettings]
+    order=[m.AuditLog,m.ImportJob,m.InvoiceDelivery,m.InvoiceLine,m.Invoice,m.BillingProfile,m.EthicalWallMember,m.EthicalWall,m.StageHistory,m.ConflictCheck,m.Activity,m.CampaignMember,m.Engagement,m.Lead,m.Opportunity,m.Contact,m.Account,m.Campaign,m.User,m.Stage,m.Pipeline,m.PracticeArea,m.FirmCrmSettings]
     for model in order:
         db.execute(delete(model.__table__).where(model.firm_id==firm_id))

@@ -27,6 +27,7 @@ ENGAGEMENT_STATUSES = ("active", "completed", "on_hold", "terminated")
 CAMPAIGN_KINDS = ("event", "webinar", "newsletter", "seminar", "sponsorship", "content", "other")
 CAMPAIGN_STATUSES = ("planned", "active", "completed")
 MEMBER_STATUSES = ("invited", "registered", "attended", "responded", "no_show")
+INVOICE_STATUSES = ("draft", "issued", "sent", "paid", "void")
 LOST_REASONS = ("price", "selected competitor", "no decision", "timing", "conflict", "scope change", "other")
 
 Role = Literal["admin", "partner", "manager", "staff", "marketing"]
@@ -50,3 +51,4 @@ CampaignKind = Literal["event", "webinar", "newsletter", "seminar", "sponsorship
 CampaignStatus = Literal["planned", "active", "completed"]
 MemberStatus = Literal["invited", "registered", "attended", "responded", "no_show"]
 LostReason = Literal["price", "selected competitor", "no decision", "timing", "conflict", "scope change", "other"]
+InvoiceStatus = Literal["draft", "issued", "sent", "paid", "void"]

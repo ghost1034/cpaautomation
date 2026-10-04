@@ -49,7 +49,7 @@ def refresh_visibility(db: CrmSession):
         return
     def rows(model):
         table = model.__table__
-        names = {'id','wall_id','user_id','entity_type','entity_id','is_active','account_id','opportunity_id','contact_id','lead_id','converted_account_id','converted_opportunity_id','converted_contact_id'}
+        names = {'id','wall_id','user_id','entity_type','entity_id','is_active','account_id','opportunity_id','contact_id','lead_id','converted_account_id','converted_opportunity_id','converted_contact_id','engagement_id','invoice_id'}
         columns = [c for c in table.columns if c.name in names]
         return db.connection().execute(select(*columns).where(table.c.firm_id == firm)).mappings().all()
     walls = rows(m.EthicalWall)
@@ -63,11 +63,14 @@ def refresh_visibility(db: CrmSession):
     hidden.update(account=ha, opportunity=ho, contact=hc, lead=hl)
     for model, kind in [(m.Engagement,'engagement'), (m.Activity,'activity'), (m.ConflictCheck,'conflict_check'), (m.StageHistory,'stage_history'), (m.CampaignMember,'campaign_member'), (m.AuditLog,'audit_log')]:
         hidden[kind] = {r['id'] for r in rows(model) if r.get('account_id') in ha or r.get('opportunity_id') in ho or r.get('contact_id') in hc or r.get('lead_id') in hl}
+    hidden['invoice'] = {r['id'] for r in rows(m.Invoice) if r['account_id'] in ha or r['engagement_id'] in hidden['engagement']}
+    for model, kind in [(m.InvoiceLine,'invoice_line'), (m.InvoiceDelivery,'invoice_delivery')]:
+        hidden[kind] = {r['id'] for r in rows(model) if r['invoice_id'] in hidden['invoice']}
     hidden['ethical_wall'] = {r['id'] for r in walls if (r['entity_type']=='account' and r['entity_id'] in ha) or (r['entity_type']=='opportunity' and r['entity_id'] in ho)}
     db.info['hidden'] = hidden
 
 
-KINDS = {m.Account:'account', m.Opportunity:'opportunity', m.Contact:'contact', m.Lead:'lead', m.Engagement:'engagement', m.Activity:'activity', m.ConflictCheck:'conflict_check', m.StageHistory:'stage_history', m.CampaignMember:'campaign_member', m.EthicalWall:'ethical_wall'}
+KINDS = {m.Account:'account', m.Opportunity:'opportunity', m.Contact:'contact', m.Lead:'lead', m.Engagement:'engagement', m.Activity:'activity', m.ConflictCheck:'conflict_check', m.StageHistory:'stage_history', m.CampaignMember:'campaign_member', m.EthicalWall:'ethical_wall', m.Invoice:'invoice', m.InvoiceLine:'invoice_line', m.InvoiceDelivery:'invoice_delivery'}
 
 
 @event.listens_for(CrmSession, 'do_orm_execute')

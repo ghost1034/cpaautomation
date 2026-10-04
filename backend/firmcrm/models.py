@@ -8,6 +8,7 @@ Closed-Won), FirmCrmEngagement (the won deal as a matter/engagement), originatio
 from __future__ import annotations
 
 from datetime import UTC, date, datetime
+from decimal import Decimal
 
 from sqlalchemy import (
     JSON,
@@ -18,6 +19,8 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -114,6 +117,7 @@ class FirmCrmAccount(Base, FirmMixin, TimestampMixin, ArchiveMixin):
     address: Mapped[str | None] = mapped_column(String(255))
     city: Mapped[str | None] = mapped_column(String(80))
     state: Mapped[str | None] = mapped_column(String(40))
+    postal_code: Mapped[str | None] = mapped_column(String(20))
     country: Mapped[str] = mapped_column(String(40), default="US")
     revenue_band: Mapped[str | None] = mapped_column(String(40))
     employee_band: Mapped[str | None] = mapped_column(String(40))
@@ -429,6 +433,112 @@ class FirmCrmAuditLog(Base, FirmMixin):
     after_json: Mapped[str | None] = mapped_column(Text)
     note: Mapped[str | None] = mapped_column(String(255))
 
+
+# ---- billing
+
+class FirmCrmBillingProfile(Base, FirmMixin, TimestampMixin, ArchiveMixin):
+    """Issuer identity and wire instructions printed on invoices. The account number is encrypted at rest."""
+
+    __tablename__ = "firmcrm_billing_profiles"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    label: Mapped[str] = mapped_column(String(120))
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False)
+    issuer_name: Mapped[str] = mapped_column(String(200))
+    address_line1: Mapped[str | None] = mapped_column(String(200))
+    address_line2: Mapped[str | None] = mapped_column(String(200))
+    city: Mapped[str | None] = mapped_column(String(80))
+    state: Mapped[str | None] = mapped_column(String(40))
+    postal_code: Mapped[str | None] = mapped_column(String(20))
+    country: Mapped[str | None] = mapped_column(String(40))
+    phone: Mapped[str | None] = mapped_column(String(40))
+    email: Mapped[str | None] = mapped_column(String(255))
+    website: Mapped[str | None] = mapped_column(String(255))
+    accent_color: Mapped[str] = mapped_column(String(7), default="#1683DB")
+    bank_name: Mapped[str | None] = mapped_column(String(200))
+    account_name: Mapped[str | None] = mapped_column(String(200))
+    routing_number: Mapped[str | None] = mapped_column(String(40))
+    swift_code: Mapped[str | None] = mapped_column(String(20))
+    account_number_ciphertext: Mapped[bytes | None] = mapped_column(LargeBinary)
+    account_number_last4: Mapped[str | None] = mapped_column(String(4))
+    default_terms_days: Mapped[int] = mapped_column(Integer, default=30)
+    default_terms_text: Mapped[str] = mapped_column(String(500), default="Please pay invoice by {due_date}")
+    email_subject_template: Mapped[str] = mapped_column(String(300), default="Invoice {invoice_number} from {issuer_name}")
+    email_message_template: Mapped[str] = mapped_column(
+        Text, default="Hello,\n\nPlease find invoice {invoice_number} for {total} attached, due {due_date}.\n\nThank you,\n{issuer_name}")
+    footer_note: Mapped[str | None] = mapped_column(Text)
+
+    def set_account_number(self, value: str | None) -> None:
+        from services.encryption_service import encryption_service
+        digits = (value or "").strip()
+        self.account_number_ciphertext = encryption_service.encrypt_token(digits) if digits else None
+        self.account_number_last4 = digits[-4:] if digits else None
+
+    def get_account_number(self) -> str | None:
+        from services.encryption_service import encryption_service
+        return encryption_service.decrypt_token(self.account_number_ciphertext) if self.account_number_ciphertext else None
+
+
+class FirmCrmInvoice(Base, FirmMixin, TimestampMixin):
+    __tablename__ = "firmcrm_invoices"
+    __table_args__ = (UniqueConstraint("firm_id", "number", name="firmcrm_uq_invoices_number"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    number: Mapped[str | None] = mapped_column(String(40))  # allocated on issue
+    status: Mapped[str] = mapped_column(String(20), default="draft", index=True)  # draft|issued|sent|paid|void
+    billing_profile_id: Mapped[int] = mapped_column(ForeignKey("firmcrm_billing_profiles.id"))
+    account_id: Mapped[int | None] = mapped_column(ForeignKey("firmcrm_accounts.id"), index=True)
+    engagement_id: Mapped[int | None] = mapped_column(ForeignKey("firmcrm_engagements.id"))
+    billed_to_name: Mapped[str] = mapped_column(String(200))
+    billed_to_address: Mapped[str | None] = mapped_column(Text)
+    billed_to_email: Mapped[str | None] = mapped_column(String(255))
+    billed_to_cc: Mapped[str | None] = mapped_column(String(500))
+    issue_date: Mapped[date | None] = mapped_column(Date)
+    due_date: Mapped[date | None] = mapped_column(Date)
+    terms_text: Mapped[str | None] = mapped_column(String(500))
+    currency: Mapped[str] = mapped_column(String(3), default="USD")
+    subtotal: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=Decimal("0.00"))
+    total: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=Decimal("0.00"))
+    notes: Mapped[str | None] = mapped_column(Text)
+    # Frozen at issue so later profile edits never change an issued invoice.
+    issuer_snapshot: Mapped[dict | None] = mapped_column(JSON)
+    account_number_ciphertext: Mapped[bytes | None] = mapped_column(LargeBinary)
+    issued_at: Mapped[datetime | None] = mapped_column(DateTime)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime)
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime)
+    voided_at: Mapped[datetime | None] = mapped_column(DateTime)
+    void_reason: Mapped[str | None] = mapped_column(String(500))
+    created_by_id: Mapped[str | None] = mapped_column(String(128), ForeignKey("users.id", ondelete="SET NULL"))
+
+    lines: Mapped[list[FirmCrmInvoiceLine]] = relationship(back_populates="invoice", order_by="FirmCrmInvoiceLine.position",
+                                                          cascade="all, delete-orphan")
+    deliveries: Mapped[list[FirmCrmInvoiceDelivery]] = relationship(order_by="FirmCrmInvoiceDelivery.id",
+                                                                   cascade="all, delete-orphan")
+
+
+class FirmCrmInvoiceLine(Base, FirmMixin):
+    __tablename__ = "firmcrm_invoice_lines"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    invoice_id: Mapped[int] = mapped_column(ForeignKey("firmcrm_invoices.id", ondelete="CASCADE"), index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    description: Mapped[str] = mapped_column(String(500))
+    unit_cost: Mapped[Decimal] = mapped_column(Numeric(14, 2))
+    quantity: Mapped[Decimal] = mapped_column(Numeric(12, 2))
+    amount: Mapped[Decimal] = mapped_column(Numeric(14, 2))
+    invoice: Mapped[FirmCrmInvoice] = relationship(back_populates="lines")
+
+
+class FirmCrmInvoiceDelivery(Base, FirmMixin):
+    __tablename__ = "firmcrm_invoice_deliveries"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    invoice_id: Mapped[int] = mapped_column(ForeignKey("firmcrm_invoices.id", ondelete="CASCADE"), index=True)
+    to_email: Mapped[str] = mapped_column(String(255))
+    cc: Mapped[str | None] = mapped_column(String(500))
+    subject: Mapped[str] = mapped_column(String(300))
+    status: Mapped[str] = mapped_column(String(20))  # sent|failed
+    error: Mapped[str | None] = mapped_column(String(1000))
+    sent_by_id: Mapped[str | None] = mapped_column(String(128), ForeignKey("users.id", ondelete="SET NULL"))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
+
+
 User = FirmCrmUser
 PracticeArea = FirmCrmPracticeArea
 Pipeline = FirmCrmPipeline
@@ -447,6 +557,10 @@ EthicalWall = FirmCrmEthicalWall
 EthicalWallMember = FirmCrmEthicalWallMember
 ImportJob = FirmCrmImportJob
 AuditLog = FirmCrmAuditLog
+BillingProfile = FirmCrmBillingProfile
+Invoice = FirmCrmInvoice
+InvoiceLine = FirmCrmInvoiceLine
+InvoiceDelivery = FirmCrmInvoiceDelivery
 
 class FirmCrmSettings(Base):
     __tablename__ = "firmcrm_settings"
@@ -456,5 +570,7 @@ class FirmCrmSettings(Base):
     stale_opportunity_days: Mapped[int] = mapped_column(Integer, default=21)
     conflict_match_threshold: Mapped[float] = mapped_column(Float, default=0.82)
     admin_bypasses_walls: Mapped[bool] = mapped_column(Boolean, default=True)
+    next_invoice_number: Mapped[int] = mapped_column(Integer, default=1)
+    invoice_number_width: Mapped[int] = mapped_column(Integer, default=5)
 
 CRM_MODELS = [value for key, value in list(globals().items()) if key.startswith("FirmCrm") and isinstance(value, type)]

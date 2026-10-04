@@ -7,13 +7,13 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from firmcrm.models import AuditLog, Account, Contact, Opportunity, Engagement, Activity, ConflictCheck, EthicalWall
+from firmcrm.models import AuditLog, Account, Contact, Opportunity, Engagement, Activity, ConflictCheck, EthicalWall, Invoice
 
 
 def record(db: Session, *, actor_id: str | None, action: str, entity_type: str, entity_id: int | str | None,
            before: Any = None, after: Any = None, note: str | None = None, opportunity_id: int | None = None) -> AuditLog:
     account_id = contact_id = None
-    models = {'account': Account, 'contact': Contact, 'opportunity': Opportunity, 'engagement': Engagement, 'activity': Activity, 'conflict_check': ConflictCheck, 'ethical_wall': EthicalWall}
+    models = {'account': Account, 'contact': Contact, 'opportunity': Opportunity, 'engagement': Engagement, 'activity': Activity, 'conflict_check': ConflictCheck, 'ethical_wall': EthicalWall, 'invoice': Invoice}
     model = models.get(entity_type)
     subject = db.get(model, entity_id) if model and entity_id is not None else None
     if subject is not None:
