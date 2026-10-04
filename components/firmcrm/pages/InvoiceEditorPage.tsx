@@ -17,7 +17,7 @@ import { invoicePlaceholderValues, renderTemplatePreview } from "@/components/fi
 import { formatCents, invoiceTotalCents } from "@/components/firmcrm/lib/billingMath";
 import { useBillingProfiles } from "./BillingPage";
 import { useAuth, useCrmContext } from "@/components/firmcrm/lib/auth";
-import { fmtDateTime, titleCase } from "@/components/firmcrm/lib/format";
+import { fmtDateTime, plural, titleCase } from "@/components/firmcrm/lib/format";
 
 type Draft = {
   billing_profile_id: number | null; account_id: number | null; engagement_id: number | null;
@@ -210,7 +210,7 @@ export default function InvoiceEditorPage() {
           <Card title="Dates and terms">
             <fieldset disabled={!editable} className="grid grid-cols-3 gap-4">
               <Field label="Date of issue" hint="Defaults to the day it is issued."><Input type="date" value={draft.issue_date} onChange={(e) => set("issue_date", e.target.value)} /></Field>
-              <Field label="Due date" hint={profile ? `Defaults to ${profile.default_terms_days} days after issue.` : undefined}><Input type="date" value={draft.due_date} onChange={(e) => set("due_date", e.target.value)} /></Field>
+              <Field label="Due date" hint={profile ? `Defaults to ${plural(profile.default_terms_days, "day")} after issue.` : undefined}><Input type="date" value={draft.due_date} onChange={(e) => set("due_date", e.target.value)} /></Field>
               <Field label="Currency"><Input value={draft.currency} maxLength={3} onChange={(e) => set("currency", e.target.value.toUpperCase())} /></Field>
               <TemplateField label="Terms" className="col-span-3" value={draft.terms_text} maxLength={500} onChange={(text) => set("terms_text", text)}
                 values={termValues} disabled={!editable} hint="Placeholders are filled in when the invoice is issued." />

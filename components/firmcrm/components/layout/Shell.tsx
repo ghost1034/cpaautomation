@@ -17,7 +17,7 @@ const NAV = [
 export default function Shell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()
   const { atLeast } = useAuth()
-  const { firm_name, settings } = useCrmContext()
+  const { firm_name } = useCrmContext()
   const nav = useNavigate()
   const [q, setQ] = useState('')
   const input = useRef<HTMLInputElement>(null)
@@ -34,7 +34,7 @@ export default function Shell({ children }: { children: ReactNode }) {
       <nav aria-label="FirmCRM" className="flex gap-1 overflow-x-auto lg:flex-col">{NAV.filter(([path]) => !['/data','/admin'].includes(path) || atLeast('manager')).map(([path,name,Icon]) => <Link key={path} to={path} aria-current={pathname === path ? 'page' : undefined} className={`flex shrink-0 items-center gap-2 rounded-crm-md px-3 py-2 text-[13px] hover:no-underline ${pathname === path || (path !== '/' && pathname.startsWith(`${path}/`)) ? 'bg-crm-sand-100 font-semibold text-crm-sand-900' : 'text-crm-sand-600 hover:bg-crm-sand-100'}`}><Icon size={16} strokeWidth={1.5}/>{name}</Link>)}</nav>
     </aside>
     <main className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4 lg:p-6">
-      <div className="mb-6 flex items-center justify-between gap-3"><div className="text-xs text-crm-sand-500">Estimated fees · {settings.default_currency}</div><div className="relative w-[320px] max-w-[70%]"><Search size={14} className="absolute left-2 top-2 text-crm-sand-500"/><input ref={input} className="field pl-7" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>{if(e.key==='Escape')setQ('')}} aria-label="Search CRM" placeholder="Search accounts, contacts, opportunities…"/>{q.trim().length >= 2 && <div className="absolute right-0 z-crm-dropdown mt-1 w-full rounded-crm-md border border-crm-sand-150 bg-crm-sand-0 shadow-crm-menu">{search.isPending ? <p className="p-3">Searching…</p> : search.isError ? <p className="p-3" role="alert">{search.error.message}</p> : !search.data?.length ? <p className="p-3">No matches</p> : search.data.map(item=><button key={item.path} className="block w-full truncate px-3 py-2 text-left hover:bg-crm-sand-50" onClick={()=>{setQ('');nav(item.path)}}>{item.name}</button>)}</div>}</div></div>
+      <div className="mb-6 flex items-center justify-end gap-3"><div className="relative w-[320px] max-w-[70%]"><Search size={14} className="absolute left-2 top-2 text-crm-sand-500"/><input ref={input} className="field pl-7" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>{if(e.key==='Escape')setQ('')}} aria-label="Search CRM" placeholder="Search accounts, contacts, opportunities…"/>{q.trim().length >= 2 && <div className="absolute right-0 z-crm-dropdown mt-1 w-full rounded-crm-md border border-crm-sand-150 bg-crm-sand-0 shadow-crm-menu">{search.isPending ? <p className="p-3">Searching…</p> : search.isError ? <p className="p-3" role="alert">{search.error.message}</p> : !search.data?.length ? <p className="p-3">No matches</p> : search.data.map(item=><button key={item.path} className="block w-full truncate px-3 py-2 text-left hover:bg-crm-sand-50" onClick={()=>{setQ('');nav(item.path)}}>{item.name}</button>)}</div>}</div></div>
       {children}
     </main>
   </div>

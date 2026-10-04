@@ -12,7 +12,7 @@ import { FormModal, type FieldDef } from "@/components/firmcrm/components/ui/For
 import { useToast } from "@/components/firmcrm/components/ui/Toast";
 import { useUsers, opt, strOpts } from "@/components/firmcrm/lib/hooks";
 import { CONTACT_ROLES, LIFECYCLES } from "@/components/firmcrm/lib/options";
-import { titleCase } from "@/components/firmcrm/lib/format";
+import { plural, titleCase } from "@/components/firmcrm/lib/format";
 import { ArchivedChip, FilterToggle, NameCell, ResultCount, SearchInput, cellDate, cellText } from "@/components/firmcrm/components/ui/cells";
 
 export function useContactFields(): FieldDef[] {
@@ -60,7 +60,7 @@ export default function ContactsPage() {
         <SearchInput placeholder="Search name, email, title…" value={q} onChange={(e) => { setQ(e.target.value); pager.reset(); }} />
         <Select value={lifecycle} onChange={(e) => { setLifecycle(e.target.value); pager.reset(); }} options={strOpts(LIFECYCLES)} placeholder="All lifecycles" className="!w-[180px]" aria-label="Lifecycle" />
         <FilterToggle checked={archived} onChange={(v) => { setArchived(v); pager.reset(); }}>Show archived</FilterToggle>
-        <ResultCount>{contacts.data?.total ?? 0} contacts</ResultCount>
+        <ResultCount>{plural(contacts.data?.total ?? 0, "contact")}</ResultCount>
         {atLeast("manager") && <Button size="sm" className="ml-auto" onClick={() => dataApi.exportCsv("contacts", archived).catch(error)}><Download size={12} />Export CSV</Button>}
       </div>
       <div className="card overflow-hidden">

@@ -24,3 +24,10 @@ def register_vera_fonts(regular_name: str, bold_name: str) -> tuple[str, str]:
     pdfmetrics.registerFont(TTFont(regular_name, os.path.join(font_dir, "Vera.ttf")))
     pdfmetrics.registerFont(TTFont(bold_name, os.path.join(font_dir, "VeraBd.ttf")))
     return regular_name, bold_name
+
+
+def register_roboto_fonts(regular_name: str, bold_name: str) -> tuple[str, str]:
+    font_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "fonts")
+    pdfmetrics.registerFont(TTFont(regular_name, os.path.join(font_dir, "Roboto-Regular.ttf")))
+    pdfmetrics.registerFont(TTFont(bold_name, os.path.join(font_dir, "Roboto-Bold.ttf")))
+    return regular_name, bold_name

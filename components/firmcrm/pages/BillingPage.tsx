@@ -13,6 +13,7 @@ import { useToast } from "@/components/firmcrm/components/ui/Toast";
 import { InvoiceStatusBadge } from "@/components/firmcrm/components/billing/InvoiceStatusBadge";
 import { BillingProfileForm } from "@/components/firmcrm/components/billing/BillingProfileForm";
 import { formatAmount } from "@/components/firmcrm/lib/billingMath";
+import { plural } from "@/components/firmcrm/lib/format";
 import { strOpts } from "@/components/firmcrm/lib/hooks";
 import { INVOICE_STATUSES } from "@/components/firmcrm/lib/options";
 import { useAuth } from "@/components/firmcrm/lib/auth";
@@ -63,7 +64,7 @@ function InvoiceList() {
     <div className="mb-4 flex flex-wrap items-center gap-3">
       <SearchInput value={q} onChange={(e) => { setQ(e.target.value); pager.reset(); }} placeholder="Search customer or number…" aria-label="Search invoices" className="!w-[260px]" />
       <Select value={status} onChange={(e) => { setStatus(e.target.value); pager.reset(); }} options={strOpts(INVOICE_STATUSES)} placeholder="All statuses" className="!w-[160px]" aria-label="Invoice status" />
-      <ResultCount>{invoices.data?.total ?? 0} invoices</ResultCount>
+      <ResultCount>{plural(invoices.data?.total ?? 0, "invoice")}</ResultCount>
     </div>
     <div className="card overflow-hidden">
       <DataTable rows={invoices.data?.items} columns={cols} loading={invoices.isLoading} twoLine onRowClick={(i) => nav(`/billing/${i.id}`)} sort={sorting.sort} onSortChange={sorting.onSortChange}
@@ -97,7 +98,7 @@ function ProfileList({ profiles }: { profiles: BillingProfile[] | undefined }) {
             { label: "Address", value: [p.address_line1, p.address_line2, [[p.city, p.state].filter(Boolean).join(", "), p.postal_code].filter(Boolean).join(" ")].filter(Boolean).join("\n") || null, span: 2 },
             { label: "Account name", value: p.account_name }, { label: "Bank", value: p.bank_name },
             { label: "Routing number", value: p.routing_number }, { label: "Account number", value: p.account_number_last4 ? `•••• ${p.account_number_last4}` : null },
-            { label: "Terms", value: `${p.default_terms_days} days` },
+            { label: "Terms", value: plural(p.default_terms_days, "day") },
           ]} />
         </Card>
       ))}

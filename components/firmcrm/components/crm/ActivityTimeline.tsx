@@ -10,7 +10,7 @@ import { Badge, Button, Input, Spinner, Textarea, cn } from "@/components/firmcr
 import { useToast } from "@/components/firmcrm/components/ui/Toast";
 import { useConfirm } from "@/components/firmcrm/components/ui/Confirm";
 import { ACTIVITY_KINDS } from "@/components/firmcrm/lib/options";
-import { fmtDate } from "@/components/firmcrm/lib/format";
+import { fmtDate, plural } from "@/components/firmcrm/lib/format";
 import { useAuth } from "@/components/firmcrm/lib/auth";
 
 const ICON: Record<Activity["kind"], LucideIcon> = { call: Phone, email: Mail, meeting: Calendar, note: StickyNote, task: CheckSquare };
@@ -134,7 +134,7 @@ export function ActivityTimeline({ filter, linkTo, extraEvents, limit, readOnly,
               </div>))}
           </div>)}
       </div>
-      {truncated && onViewAll && <button type="button" onClick={onViewAll} className="mt-3 text-[12px] leading-4 text-crm-sand-600 hover:text-crm-sand-900 hover:underline">View all {total} activities</button>}
+      {truncated && onViewAll && <button type="button" onClick={onViewAll} className="mt-3 text-[12px] leading-4 text-crm-sand-600 hover:text-crm-sand-900 hover:underline">View all {plural(total, "activity", "activities")}</button>}
     </div>
   );
 }

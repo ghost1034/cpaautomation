@@ -13,7 +13,7 @@ import { useConfirm, useReasonPrompt } from "@/components/firmcrm/components/ui/
 import { useToast } from "@/components/firmcrm/components/ui/Toast";
 import { usePracticeAreas, useUsers, opt, strOpts } from "@/components/firmcrm/lib/hooks";
 import { LEAD_SOURCES, LEAD_STATUSES } from "@/components/firmcrm/lib/options";
-import { titleCase } from "@/components/firmcrm/lib/format";
+import { plural, titleCase } from "@/components/firmcrm/lib/format";
 import { ArchivedChip, FilterToggle, NameCell, ResultCount, SearchInput, cellMoney, cellText } from "@/components/firmcrm/components/ui/cells";
 
 export default function LeadsPage() {
@@ -108,7 +108,7 @@ export default function LeadsPage() {
         <SearchInput placeholder="Search name, company, email…" value={q} onChange={(e) => { setQ(e.target.value); pager.reset(); }} />
         <Select value={status} onChange={(e) => { setStatus(e.target.value); pager.reset(); }} options={[...strOpts(LEAD_STATUSES), { value: "converted", label: "Converted" }]} placeholder="All statuses" className="!w-[180px]" aria-label="Lead status" />
         <FilterToggle checked={archived} onChange={(v) => { setArchived(v); pager.reset(); }}>Show archived</FilterToggle>
-        <ResultCount>{leads.data?.total ?? 0} leads</ResultCount>
+        <ResultCount>{plural(leads.data?.total ?? 0, "lead")}</ResultCount>
         {atLeast("manager") && <Button size="sm" className="ml-auto" onClick={() => dataApi.exportCsv("leads").catch(error)}><Download size={12} />Export CSV</Button>}
       </div>
       <div className="card overflow-hidden">

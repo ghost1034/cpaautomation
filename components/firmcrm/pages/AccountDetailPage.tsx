@@ -21,11 +21,10 @@ import { FactsGrid, NotFound, type Fact } from "@/components/firmcrm/components/
 import { useContactFields } from "./ContactsPage";
 import { NewOpportunityModal } from "./OpportunitiesPage";
 import { ClearanceList } from "./ClearancePage";
-import { fmtDate, useMoney, titleCase } from "@/components/firmcrm/lib/format";
+import { fmtDate, plural, useMoney, titleCase } from "@/components/firmcrm/lib/format";
 
 type Tab = "overview" | "contacts" | "opportunities" | "activities" | "engagements" | "invoices" | "clearance";
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 export default function AccountDetailPage() {
   const money = useMoney();

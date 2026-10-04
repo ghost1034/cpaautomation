@@ -17,7 +17,7 @@ from reportlab.lib.pagesizes import LETTER
 from reportlab.lib.utils import simpleSplit
 from reportlab.pdfgen import canvas
 
-from services.pdf_common import money, register_vera_fonts
+from services.pdf_common import money, register_roboto_fonts
 
 PAGE_W, PAGE_H = LETTER
 BAND_X0, BAND_X1 = 49.5, 562.5
@@ -71,7 +71,7 @@ class _Renderer:
         self.c = canvas.Canvas(self.buffer, pagesize=LETTER, invariant=1, pageCompression=1)
         self.c.setTitle(f"Invoice {doc.get('number') or 'Draft'}")
         self.c.setAuthor(self.issuer.get("issuer_name") or "")
-        self.font, self.bold = register_vera_fonts("FirmCrmVera", "FirmCrmVeraBold")
+        self.font, self.bold = register_roboto_fonts("FirmCrmRoboto", "FirmCrmRobotoBold")
 
     # -- primitives (top-based coordinates)
     def text(self, x: float, top: float, value: str, size: float, color=TEXT, bold: bool = False, align: str = "left"):

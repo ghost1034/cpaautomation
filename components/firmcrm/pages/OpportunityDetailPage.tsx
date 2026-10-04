@@ -17,7 +17,7 @@ import { ClearanceList } from "./ClearancePage";
 import { useOpportunityFields } from "./OpportunitiesPage";
 import { usePipelines, strOpts } from "@/components/firmcrm/lib/hooks";
 import { EL_STATUSES, INDEPENDENCE_QUESTIONS, LOST_REASONS } from "@/components/firmcrm/lib/options";
-import { fmtDate, fmtDateTime, useMoney, titleCase } from "@/components/firmcrm/lib/format";
+import { fmtDate, fmtDateTime, plural, useMoney, titleCase } from "@/components/firmcrm/lib/format";
 import { useAuth } from "@/components/firmcrm/lib/auth";
 
 export function CloseLostModal({ opp, stageId, onClose }: { opp: Opportunity; stageId: number; onClose: () => void }) {
@@ -171,7 +171,7 @@ export default function OpportunityDetailPage() {
             <span className="text-[18px] leading-6 font-semibold text-crm-sand-500">%</span>
           </div>
         </Fact>
-        <Fact label="Expected close" sub={<span className="num">{o.days_in_stage} days in stage</span>}>
+        <Fact label="Expected close" sub={<span className="num">{plural(o.days_in_stage, "day")} in stage</span>}>
           <div className={cn("text-[20px] leading-7 font-semibold tracking-[-0.015em] num", pastDue ? "text-crm-danger-600" : "text-crm-sand-900")} title={pastDue ? "Expected close date has passed" : undefined}>{fmtDate(o.expected_close)}</div>
         </Fact>
         <Fact label="Engagement letter" sub={elOk ? "Gate satisfied" : isOpen ? "Required before Closed Won" : undefined}>

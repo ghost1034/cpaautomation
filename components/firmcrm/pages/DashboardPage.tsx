@@ -7,7 +7,7 @@ import { format, isBefore, isToday, parseISO, startOfDay } from "date-fns";
 import { oppsApi, reportsApi } from "@/components/firmcrm/api";
 import { Badge, Card, Empty, PageHeader, Stat, cn } from "@/components/firmcrm/components/ui";
 import { CHART, ChartFrame, ChartLegend, WinLossBar, barChartProps, barProps, gridProps, tooltipProps, xAxisProps, } from "@/components/firmcrm/components/crm/charts";
-import { fmtDate, useMoney, num, pct } from "@/components/firmcrm/lib/format";
+import { fmtDate, useMoney, num, pct, plural } from "@/components/firmcrm/lib/format";
 import { useAuth } from "@/components/firmcrm/lib/auth";
 
 /* Skeleton rows for table loads (§6.6): no spinners. */
@@ -26,7 +26,6 @@ function TableSkeleton({ rows = 6 }: { rows?: number }) {
 function Dash() { return <span className="text-crm-sand-300">—</span>; }
 
 /* Compact money for tiles: one decimal ($3.1M), unlike the 0-decimal shared helper. */
-const plural = (n: number, one: string, many: string) => `${num(n)} ${n === 1 ? one : many}`;
 
 /* Due-date cell: overdue in danger, today in warn, otherwise tertiary. */
 function Due({ iso }: { iso: string | null }) {
@@ -88,8 +87,8 @@ export default function DashboardPage() {
         <Stat label="Weighted pipeline" value={compact(k.weighted_pipeline)} sub="probability-adjusted" />
         <Stat label="Won QTD" value={compact(k.won_qtd)} delta={k.won_qtd_delta_pct} sub={`${plural(k.won_qtd_count ?? 0, "win", "wins")} · ${compact(k.won_mtd)} MTD${k.won_qtd_delta_pct != null ? " · vs. prior quarter to date" : ""}`} />
         <Stat label="Closing ≤ 30 days" value={compact(k.closing_30_amount)} sub={plural(k.closing_30_count ?? 0, "opportunity", "opportunities")} />
-        <Stat label="Stale opportunities" value={num(k.stale_count)} sub={`no activity ≥ ${settings.stale_opportunity_days} days`} tone={k.stale_count ? "warn" : "default"} />
-        <Stat label="Pending clearances" value={num(k.pending_clearances)} sub={`${num(k.new_leads)} new leads · ${num(k.clients)} clients`} tone={k.pending_clearances ? "warn" : "default"} />
+        <Stat label="Stale opportunities" value={num(k.stale_count)} sub={`no activity ≥ ${plural(settings.stale_opportunity_days, "day")}`} tone={k.stale_count ? "warn" : "default"} />
+        <Stat label="Pending clearances" value={num(k.pending_clearances)} sub={`${plural(k.new_leads, "new lead")} · ${plural(k.clients, "client")}`} tone={k.pending_clearances ? "warn" : "default"} />
       </div>
 
       {/* Main row: 8 / 4 */}
@@ -182,7 +181,7 @@ export default function DashboardPage() {
             <WinLossBar won={wl.won_count} lost={wl.lost_count} className="mt-3.5" />
             <div className="mt-2.5 flex justify-between text-[12px] leading-4 text-crm-sand-600">
               <span>Avg. won <b className="font-medium text-crm-sand-900 num">{money(wl.avg_won_amount)}</b></span>
-              <span>Avg. <b className="font-medium text-crm-sand-900 num">{wl.avg_days_to_close == null ? "—" : `${Math.round(wl.avg_days_to_close)} days`}</b> to close</span>
+              <span>Avg. <b className="font-medium text-crm-sand-900 num">{wl.avg_days_to_close == null ? "—" : plural(Math.round(wl.avg_days_to_close), "day")}</b> to close</span>
             </div>
           </Card>
         </div>
@@ -194,7 +193,7 @@ export default function DashboardPage() {
         padded={false}
         actions={<span className="text-crm-sand-500">No activity in 21 or more days<span className="mx-1.5 text-crm-sand-300">·</span><span className="num">{num(k.stale_count)} of {num((k.open_count ?? 0))}</span></span>}
       >
-        {stale.isLoading ? <TableSkeleton /> : !stale.data?.length ? <Empty title="No stale opportunities" hint={`Every open pursuit has had activity in the last ${settings.stale_opportunity_days} days.`} /> : (
+        {stale.isLoading ? <TableSkeleton /> : !stale.data?.length ? <Empty title="No stale opportunities" hint={`Every open pursuit has had activity in the last ${plural(settings.stale_opportunity_days, "day")}.`} /> : (
           <>
             <table className="tbl [&_td:first-child]:pl-5 [&_td:last-child]:pr-5 [&_th:first-child]:pl-5 [&_th:last-child]:pr-5">
               <thead>

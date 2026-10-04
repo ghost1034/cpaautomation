@@ -11,6 +11,8 @@ export const fmtDateTime = (s: string | null | undefined) => (s ? format(parseIS
 export const ago = (s: string | null | undefined) => (s ? formatDistanceToNowStrict(parseISO(s), { addSuffix: true }) : "—");
 export const titleCase = (s: string | null | undefined) => (s ? s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "—");
 export const initials = (name: string) => name.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+/** "1 invoice", "2 invoices"; pass `many` for irregular plurals. */
+export const plural = (n: number | null | undefined, one: string, many = `${one}s`) => `${num(n)} ${n === 1 ? one : many}`;
 export const toDateInput = (s: string | null | undefined) => (s ? s.slice(0, 10) : "");
 
 export function useMoney() {

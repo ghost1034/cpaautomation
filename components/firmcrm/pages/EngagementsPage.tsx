@@ -11,7 +11,7 @@ import { FormModal, type FieldDef, type FormValues } from "@/components/firmcrm/
 import { useToast } from "@/components/firmcrm/components/ui/Toast";
 import { useUsers, partnerOptions, strOpts } from "@/components/firmcrm/lib/hooks";
 import { ENGAGEMENT_STATUSES, FEE_TYPES } from "@/components/firmcrm/lib/options";
-import { useMoney, titleCase } from "@/components/firmcrm/lib/format";
+import { plural, useMoney, titleCase } from "@/components/firmcrm/lib/format";
 import { useAuth } from "@/components/firmcrm/lib/auth";
 import { NameCell, ResultCount, cellDate, cellMoney, cellText } from "@/components/firmcrm/components/ui/cells";
 
@@ -55,7 +55,7 @@ export default function EngagementsPage() {
       <PageHeader title="Engagements" subtitle="Won work, created automatically at Closed Won. Hand-off point to practice management / PSA." actions={atLeast("manager") && <Button onClick={() => dataApi.exportCsv("engagements").catch(error)}><Download size={14} />Export CSV</Button>} />
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <Select value={status} onChange={(e) => { setStatus(e.target.value); pager.reset(); }} options={strOpts(ENGAGEMENT_STATUSES)} placeholder="All statuses" className="!w-[180px]" aria-label="Engagement status" />
-        <ResultCount>{engs.data?.total ?? 0} engagements · {money(total)} annual value on this page</ResultCount>
+        <ResultCount>{plural(engs.data?.total ?? 0, "engagement")} · {money(total)} annual value on this page</ResultCount>
       </div>
       <div className="card overflow-hidden">
         <DataTable rows={engs.data?.items} columns={cols} loading={engs.isLoading} twoLine onRowClick={(e) => atLeast("manager") && setEditing(e)} sort={sorting.sort} onSortChange={sorting.onSortChange} empty={empty} />

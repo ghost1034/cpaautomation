@@ -8,7 +8,7 @@ import { useToast } from "./Toast";
 import { TemplateField } from "@/components/firmcrm/components/billing/TemplateField";
 import type { PlaceholderValues } from "@/components/firmcrm/components/billing/templatePlaceholders";
 
-export type FieldType = "text" | "number" | "money" | "email" | "password" | "date" | "select" | "textarea" | "checkbox" | "tags" | "template";
+export type FieldType = "text" | "number" | "money" | "email" | "password" | "date" | "select" | "textarea" | "checkbox" | "tags" | "template" | "color";
 export type FieldDef = {
   name: string; label: string; type?: FieldType;
   options?: { value: string | number; label: string }[]; required?: boolean; placeholder?: string; hint?: string; span?: 1 | 2; step?: string;
@@ -160,6 +160,12 @@ export function SchemaForm({ fields, values, onChange, showAllErrors = false, er
             {f.type === "select" ? <Select {...a11y} value={(v as string | number | null) ?? ""} options={f.options ?? []} placeholder={f.placeholder ?? "Select…"} onChange={(e) => set(f.name, e.target.value === "" ? null : isNaN(Number(e.target.value)) || f.options?.some((o) => typeof o.value === "string") ? e.target.value : Number(e.target.value))} />
             : f.type === "textarea" ? <Textarea {...a11y} value={(v as string) ?? ""} onChange={(e) => set(f.name, e.target.value)} placeholder={f.placeholder} />
             : f.type === "tags" ? <TagInput {...a11y} value={Array.isArray(v) ? (v as string[]) : []} onChange={(tags) => set(f.name, tags)} placeholder={f.placeholder} />
+            : f.type === "color" ? (
+              <div className="flex gap-2">
+                <Input aria-label={`${labelText(f)} picker`} className="w-14 shrink-0 cursor-pointer p-1" type="color" value={typeof v === "string" && /^#[0-9a-f]{6}$/i.test(v) ? v : "#000000"}
+                       onChange={(e) => set(f.name, e.target.value.toUpperCase())} onBlur={() => touch(f.name)} />
+                <Input {...a11y} maxLength={7} value={v == null ? "" : String(v)} placeholder={f.placeholder} onChange={(e) => set(f.name, e.target.value === "" ? null : e.target.value)} />
+              </div>)
             : f.type === "money" ? <MoneyInput {...a11y} value={typeof v === "number" ? v : v == null || v === "" ? null : Number(v)} onValueChange={(n) => set(f.name, n)} placeholder={f.placeholder ?? "0"} min={f.min} max={f.max} />
             : <Input {...a11y} type={f.type ?? "text"} step={f.step} min={f.min} max={f.max} value={v == null ? "" : String(v)} placeholder={f.placeholder}
                      autoComplete={f.type === "password" ? "new-password" : undefined}

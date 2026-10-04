@@ -15,7 +15,7 @@ import { useToast } from "@/components/firmcrm/components/ui/Toast";
 import { ApiError } from "@/components/firmcrm/api/client";
 import { useUsers, opt, partnerOptions, strOpts } from "@/components/firmcrm/lib/hooks";
 import { ACCOUNT_TYPES, ENTITY_KINDS, INDUSTRIES, REVENUE_BANDS, RISK } from "@/components/firmcrm/lib/options";
-import { titleCase } from "@/components/firmcrm/lib/format";
+import { plural, titleCase } from "@/components/firmcrm/lib/format";
 
 export function useAccountFields(): FieldDef[] {
   const users = useUsers();
@@ -70,7 +70,7 @@ export default function AccountsPage() {
         <SearchInput placeholder="Search name, alias, industry…" value={q} onChange={(e) => { setQ(e.target.value); pager.reset(); }} />
         <Select value={type} onChange={(e) => { setType(e.target.value); pager.reset(); }} options={strOpts(ACCOUNT_TYPES)} placeholder="All types" className="!w-[180px]" aria-label="Account type" />
         <FilterToggle checked={archived} onChange={(v) => { setArchived(v); pager.reset(); }}>Show archived</FilterToggle>
-        <ResultCount>{accounts.data?.total ?? 0} accounts</ResultCount>
+        <ResultCount>{plural(accounts.data?.total ?? 0, "account")}</ResultCount>
         {atLeast("manager") && <Button size="sm" className="ml-auto" onClick={() => dataApi.exportCsv("accounts", archived).catch(error)}><Download size={12} />Export CSV</Button>}
       </div>
       <div className="card overflow-hidden">

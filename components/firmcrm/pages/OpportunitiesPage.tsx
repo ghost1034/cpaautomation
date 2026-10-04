@@ -148,7 +148,7 @@ export default function OpportunitiesPage() {
   return (
     <div className="flex flex-col">
       <PageHeader title="Opportunities"
-        subtitle={<><b className="font-medium text-crm-sand-700 num">{opps.data?.total ?? 0}</b> {status === "all" ? "" : `${status} `}opportunities{view === "table" && opps.data && opps.data.total > pager.limit ? ` (showing ${rows?.length})` : ""}{dot}<b className="font-medium text-crm-sand-700 num">{money(total)}</b> total{dot}<b className="font-medium text-crm-sand-700 num">{money(weighted)}</b> weighted</>}
+        subtitle={<><b className="font-medium text-crm-sand-700 num">{opps.data?.total ?? 0}</b> {status === "all" ? "" : `${status} `}{(opps.data?.total ?? 0) === 1 ? "opportunity" : "opportunities"}{view === "table" && opps.data && opps.data.total > pager.limit ? ` (showing ${rows?.length})` : ""}{dot}<b className="font-medium text-crm-sand-700 num">{money(total)}</b> total{dot}<b className="font-medium text-crm-sand-700 num">{money(weighted)}</b> weighted</>}
         actions={<>
           <ViewToggle view={view} onChange={setView} />
           {atLeast("manager") && <Button onClick={() => dataApi.exportCsv("opportunities").catch(error)}><Download size={14} />Export</Button>}

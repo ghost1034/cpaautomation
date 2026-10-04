@@ -9,7 +9,7 @@ import { FormModal, type FieldDef, type FormValues } from "@/components/firmcrm/
 import { useToast } from "@/components/firmcrm/components/ui/Toast";
 import { usePracticeAreas, useUsers, opt, strOpts } from "@/components/firmcrm/lib/hooks";
 import { CAMPAIGN_KINDS, CAMPAIGN_STATUSES, MEMBER_STATUSES } from "@/components/firmcrm/lib/options";
-import { fmtDate, useMoney, pct, titleCase } from "@/components/firmcrm/lib/format";
+import { fmtDate, useMoney, plural, pct, titleCase } from "@/components/firmcrm/lib/format";
 import { useAuth } from "@/components/firmcrm/lib/auth";
 import { ArchivedChip, Dash, FilterToggle, NameCell, ResultCount, SearchInput, cellCount, cellMoney } from "@/components/firmcrm/components/ui/cells";
 
@@ -63,7 +63,7 @@ export default function CampaignsPage() {
       <PageHeader title="Campaigns" subtitle="Events, webinars, and newsletters, with attribution to leads, pipeline, and won work" actions={<Button variant="primary" onClick={() => setCreating(true)}><Plus size={14} />New campaign</Button>} />
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <FilterToggle checked={archived} onChange={setArchived}>Show archived</FilterToggle>
-        <ResultCount>{camps.data?.length ?? 0} campaigns</ResultCount>
+        <ResultCount>{plural(camps.data?.length ?? 0, "campaign")}</ResultCount>
       </div>
       <div className={sel ? "grid grid-cols-1 xl:grid-cols-5 gap-4" : ""}>
         <div className={sel ? "xl:col-span-3 card overflow-hidden self-start" : "card overflow-hidden"}><DataTable rows={camps.data} columns={visibleCols} loading={camps.isLoading} twoLine onRowClick={setSelected} sort={sorting.sort} onSortChange={sorting.onSortChange} empty="No campaigns yet" /></div>

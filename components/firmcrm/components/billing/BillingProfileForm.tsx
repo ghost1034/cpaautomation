@@ -20,15 +20,15 @@ export function BillingProfileForm({ profile, onClose }: { profile: BillingProfi
   const fields = useMemo<FieldDef[]>(() => {
     const sample = { ...SAMPLE_VALUES, issuer_name: issuerName || SAMPLE_VALUES.issuer_name };
     return [
+      { name: "is_default", label: "Default for new invoices", type: "checkbox", span: 2 },
       { name: "label", label: "Profile name", required: true, placeholder: "Operating account", hint: "Shown when choosing a profile on an invoice." },
-      { name: "is_default", label: "Default for new invoices", type: "checkbox" },
       { name: "issuer_name", label: "Company name on invoice", required: true, span: 2 },
       { name: "address_line1", label: "Address line 1", span: 2 }, { name: "address_line2", label: "Address line 2", span: 2 },
       { name: "city", label: "City" }, { name: "state", label: "State" },
       { name: "postal_code", label: "ZIP / postal code" }, { name: "country", label: "Country" },
       { name: "phone", label: "Phone" }, { name: "email", label: "Billing email", type: "email", hint: "Customers' replies go here." },
       { name: "website", label: "Website" },
-      { name: "accent_color", label: "Accent color", placeholder: "#1683DB", hint: "Hex color for the invoice bands and table header.",
+      { name: "accent_color", label: "Accent color", type: "color", placeholder: "#1683DB", hint: "Hex color for the invoice bands and table header.",
         validate: (v) => (v && !HEX.test(String(v)) ? "Use a hex color such as #1683DB." : null) },
       { name: "bank_name", label: "Bank name" }, { name: "account_name", label: "Account name" },
       { name: "routing_number", label: "Routing number (ABA)" },

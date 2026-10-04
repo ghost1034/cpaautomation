@@ -1,9 +1,13 @@
 import type { CSSProperties } from "react";
+import { Roboto } from "next/font/google";
 import type { BillingProfile } from "@/components/firmcrm/api/types";
 import { formatCents, invoiceTotalCents, lineAmountCents, parseHundredths } from "@/components/firmcrm/lib/billingMath";
 import type { LineDraft } from "./LineItemsEditor";
 
 type Issuer = Partial<Pick<BillingProfile, "issuer_name" | "address_line1" | "address_line2" | "city" | "state" | "postal_code" | "phone" | "email" | "website" | "accent_color" | "bank_name" | "account_name" | "routing_number" | "swift_code">> & { account_number_last4?: string | null };
+
+// Matches the Roboto TTFs embedded in the server-rendered invoice PDF.
+const roboto = Roboto({ subsets: ["latin"], weight: ["400", "700"], display: "swap" });
 
 const usDate = (iso: string | null | undefined) => (iso ? `${iso.slice(5, 7)}/${iso.slice(8, 10)}/${iso.slice(0, 4)}` : "");
 const label = "text-[7px] font-bold uppercase tracking-[0.04em] text-crm-sand-400";
@@ -20,7 +24,7 @@ export function InvoicePreview({ issuer, number, issueDate, billedToName, billed
   const wire = [["Bank Name", issuer?.bank_name], ["Account Name", issuer?.account_name], ["Routing Number", issuer?.routing_number],
                 ["Account number", issuer?.account_number_last4 ? `•••• ${issuer.account_number_last4}` : null], ["SWIFT / BIC", issuer?.swift_code]].filter(([, v]) => v);
   return (
-    <div className="aspect-[8.5/11] w-full overflow-hidden rounded-crm-md border border-crm-sand-150 bg-white text-[8px] leading-[1.35] text-[#1f1f1f] shadow-sm" aria-label="Invoice preview">
+    <div className={`${roboto.className} aspect-[8.5/11] w-full overflow-hidden rounded-crm-md border border-crm-sand-150 bg-white text-[8px] leading-[1.35] text-[#1f1f1f] shadow-sm`} aria-label="Invoice preview">
       <div className="mx-[6%] mt-[5%] h-[2.5%]" style={accent} />
       <div className="px-[14%] pt-[5%]">
         <div className="text-[13px]">{issuer?.issuer_name || "Your company"}</div>

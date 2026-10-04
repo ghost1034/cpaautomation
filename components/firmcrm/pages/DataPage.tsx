@@ -7,7 +7,7 @@ import { Badge, Button, Card, Empty, Field, PageHeader, Select, Spinner, cn } fr
 import { Pagination, usePager } from "@/components/firmcrm/components/ui/Pagination";
 import { useConfirm } from "@/components/firmcrm/components/ui/Confirm";
 import { useToast } from "@/components/firmcrm/components/ui/Toast";
-import { fmtDateTime, num, titleCase } from "@/components/firmcrm/lib/format";
+import { fmtDateTime, num, plural, titleCase } from "@/components/firmcrm/lib/format";
 import { Dash, FilterToggle } from "@/components/firmcrm/components/ui/cells";
 
 const EXPORTS = ["accounts", "contacts", "leads", "opportunities", "engagements", "activities"];
@@ -58,7 +58,7 @@ export default function DataPage() {
   const clearFile = () => { setFile(null); setPreview(null); if (fileInput.current) fileInput.current.value = ""; };
   const commit = async () => {
     if (!preview) return;
-    const ok = await confirm({ title: `Commit import of ${num(preview.created_rows + preview.updated_rows)} ${entity}?`, body: `${num(preview.created_rows)} new and ${num(preview.updated_rows)} updated records are written; rows with exceptions are skipped.`, confirmLabel: "Commit import", tone: "primary" });
+    const ok = await confirm({ title: `Commit import of ${plural(preview.created_rows + preview.updated_rows, entity.slice(0, -1), entity)}?`, body: `${num(preview.created_rows)} new and ${num(preview.updated_rows)} updated records are written; rows with exceptions are skipped.`, confirmLabel: "Commit import", tone: "primary" });
     if (ok) run.mutate(false);
   };
   return (
@@ -96,7 +96,7 @@ export default function DataPage() {
           <div className="mt-2 text-[12px] leading-4 text-crm-sand-500">Matching: accounts by name or alias · contacts by email · leads by email + company. Matches update; others create.</div>
           {preview && (
             <div className="mt-5">
-              <div className="mb-2 flex items-center gap-2 text-[13px] font-medium text-crm-sand-900">Dry run result{preview.skipped_rows ? <Badge dot tone="warn"><span className="num">{preview.skipped_rows} rows would be skipped</span></Badge> : <Badge dot tone="success">Clean</Badge>}</div>
+              <div className="mb-2 flex items-center gap-2 text-[13px] font-medium text-crm-sand-900">Dry run result{preview.skipped_rows ? <Badge dot tone="warn"><span className="num">{plural(preview.skipped_rows, "row")} would be skipped</span></Badge> : <Badge dot tone="success">Clean</Badge>}</div>
               <JobSummary job={preview} />
             </div>)}
         </Card>
