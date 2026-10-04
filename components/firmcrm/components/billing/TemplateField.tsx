@@ -1,4 +1,5 @@
 import { useRef, type ReactNode } from "react";
+import { ChevronRight } from "lucide-react";
 import { Field, Input, Textarea, cn } from "@/components/firmcrm/components/ui";
 import {
   TEMPLATE_PLACEHOLDERS, findUnknownPlaceholders, hasPlaceholder, isRenderable, renderTemplatePreview, type PlaceholderValues,
@@ -17,7 +18,7 @@ export function insertAt(value: string, token: string, start: number | null, end
 
 /**
  * Text input for billing templates. Users click a labeled chip to insert a `{placeholder}` at the caret instead of
- * typing it, see the text as it will be rendered, and are warned about tokens or braces the server will not fill.
+ * typing it, expand a preview of the rendered text, and are warned about tokens or braces the server will not fill.
  * `values` are the real or sample placeholder values used for the preview line; unset ones show as `[Label]`.
  */
 export function TemplateField({ label, value, onChange, values, multiline = false, rows = 6, maxLength, disabled, hint, error, errorId, className, controlProps }: {
@@ -57,7 +58,6 @@ export function TemplateField({ label, value, onChange, values, multiline = fals
       </Field>
       {!disabled && (
         <div role="group" aria-label={`Insert field into ${label.replace(/\s*\*\s*$/, "")}`} className="mt-1.5 flex flex-wrap items-center gap-1">
-          <span className="mr-0.5 text-[12px] text-crm-sand-500">Insert:</span>
           {TEMPLATE_PLACEHOLDERS.map((p) => (
             <button key={p.key} type="button" title={`{${p.key}}: ${p.description}`} aria-label={`Insert ${p.label}`}
               // Keep the caret/selection in the control while clicking.
@@ -70,9 +70,12 @@ export function TemplateField({ label, value, onChange, values, multiline = fals
       )}
       {notice && <p className="mt-1.5 text-[12px] leading-4 text-crm-warn-700">{notice}</p>}
       {preview != null && (
-        <p className={cn("mt-1.5 text-[12px] leading-4 text-crm-sand-600", multiline && "line-clamp-4 whitespace-pre-line")}>
-          <span className="font-medium text-crm-sand-500">Preview: </span>{preview}
-        </p>
+        <details className="group mt-1.5">
+          <summary className="inline-flex cursor-pointer list-none items-center gap-0.5 text-[12px] font-medium leading-4 text-crm-sand-500 hover:text-crm-sand-700 [&::-webkit-details-marker]:hidden">
+            <ChevronRight size={12} className="transition-transform duration-[120ms] group-open:rotate-90" />Preview
+          </summary>
+          <p className={cn("mt-1 text-[12px] leading-4 text-crm-sand-600", multiline && "line-clamp-4 whitespace-pre-line")}>{preview}</p>
+        </details>
       )}
     </div>
   );

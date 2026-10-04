@@ -52,7 +52,7 @@ export function SendInvoiceDialog({ invoice, profile, onClose, onSent }: { invoi
         <TemplateField label="Subject *" className="col-span-2" value={values.subject} onChange={setText("subject")} values={previewValues} maxLength={300}
           error={v.shown("subject")} errorId={v.errorId("subject")} controlProps={v.fieldProps("subject")} />
         <TemplateField label="Message" className="col-span-2" multiline rows={7} value={values.message} onChange={setText("message")} values={previewValues}
-          maxLength={5000} hint="The invoice PDF is attached." />
+          maxLength={5000} />
       </div>
     </Modal>
   );

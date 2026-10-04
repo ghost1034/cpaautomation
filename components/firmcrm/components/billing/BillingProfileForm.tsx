@@ -38,7 +38,7 @@ export function BillingProfileForm({ profile, onClose }: { profile: BillingProfi
       { name: "default_terms_days", label: "Payment terms (days)", type: "number", min: 0, max: 365 },
       { name: "default_terms_text", label: "Terms text", type: "template", maxLength: 500, previewValues: sample },
       { name: "email_subject_template", label: "Email subject", type: "template", required: true, maxLength: 300, previewValues: sample },
-      { name: "email_message_template", label: "Email message", type: "template", multiline: true, maxLength: 5000, previewValues: sample, hint: "The invoice PDF is attached." },
+      { name: "email_message_template", label: "Email message", type: "template", multiline: true, maxLength: 5000, previewValues: sample },
       { name: "footer_note", label: "Footer note", type: "textarea", placeholder: "e.g. Tax ID or late-fee policy" },
     ];
   }, [profile?.account_number_last4, issuerName]);

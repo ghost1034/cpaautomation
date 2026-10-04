@@ -72,7 +72,9 @@ it('inserts a placeholder at the caret from a chip and previews the result', asy
   await click(chip('Customer name'))
   expect(input().value).toBe('{customer_name}{due_date}')
   expect(input().selectionStart).toBe('{customer_name}'.length)
-  expect(host.textContent).toContain('Preview: Acme Holdings03/31/2026')
+  const preview = host.querySelector('details')!
+  expect(preview.open).toBe(false)
+  expect(preview.textContent).toBe('PreviewAcme Holdings03/31/2026')
 })
 
 it('warns about unknown placeholders and stray braces, but not valid text', async () => {
@@ -82,7 +84,7 @@ it('warns about unknown placeholders and stray braces, but not valid text', asyn
   expect(host.textContent).toContain('{duedate} isn’t a recognized field')
   await act(async () => root.render(<Harness key="c" initial="Pay by {due_date" />))
   expect(host.textContent).toContain('Unmatched')
-  expect(host.textContent).not.toContain('Preview:')
+  expect(host.querySelector('details')).toBeNull()
 })
 
 it('hides the chips when disabled', async () => {
