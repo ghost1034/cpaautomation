@@ -99,7 +99,7 @@ export default function InvoiceEditorPage() {
     if (!draft) return [];
     const out: string[] = [];
     if (!draft.billing_profile_id) out.push("Choose a billing profile.");
-    if (!draft.billed_to_name.trim()) out.push("Enter who the invoice is billed to.");
+    if (!draft.billed_to_name.trim()) out.push("Enter a customer name.");
     if (!draft.lines.length) out.push("Add at least one line item.");
     if (Object.keys(lineErrors(draft.lines)).length) out.push("Fix the highlighted line items.");
     if (!/^[A-Za-z]{3}$/.test(draft.currency.trim())) out.push("Currency must be a 3-letter code such as USD.");
@@ -133,7 +133,7 @@ export default function InvoiceEditorPage() {
   const fileName = (i: Invoice | undefined) => `${(i?.billed_to_name ?? draft?.billed_to_name ?? "Invoice").replace(/[^\w\s-]/g, "").trim()} Invoice ${i?.number ?? "Draft"}.pdf`;
   const downloadPdf = () => run((target) => billingApi.pdf(target, fileName(invoice.data)), "", status === "draft");
   const issue = async () => {
-    if (!(await confirm({ title: "Issue this invoice?", body: "It receives the next invoice number and can no longer be edited.", confirmLabel: "Issue invoice", tone: "primary" }))) return;
+    if (!(await confirm({ title: "Issue this invoice?", body: "It can no longer be edited.", confirmLabel: "Issue invoice", tone: "primary" }))) return;
     await run((target) => billingApi.issue(target), "Invoice issued", true);
   };
   const openSend = async () => { if (status === "draft" && (await save(true)) == null) return; setSending(true); };
@@ -142,7 +142,7 @@ export default function InvoiceEditorPage() {
     if (text !== null) await run((target) => billingApi.void(target, text), "Invoice voided");
   };
   const remove = async () => {
-    if (!(await confirm({ title: "Delete this draft?", body: "The draft and its line items are removed permanently.", confirmLabel: "Delete draft" }))) return;
+    if (!(await confirm({ title: "Delete this draft?", body: "This can’t be undone.", confirmLabel: "Delete draft" }))) return;
     setBusy(true);
     try { await billingApi.remove(id!); qc.invalidateQueries({ queryKey: ["invoices"] }); toast("Draft deleted"); nav("/billing"); } catch (err) { error(err); } finally { setBusy(false); }
   };
@@ -181,11 +181,11 @@ export default function InvoiceEditorPage() {
         <div className="space-y-4 xl:col-span-7">
           <Card title="Billed to">
             <fieldset disabled={!editable} className="grid grid-cols-2 gap-4">
-              <Field label="Billing profile *" hint="Your company details and wire instructions.">
+              <Field label="Billing profile *">
                 <Select value={draft.billing_profile_id ?? ""} options={(profiles.data ?? []).map((p) => ({ value: p.id, label: p.label }))} placeholder="Select…"
                   onChange={(e) => { const p = profiles.data?.find((x) => x.id === Number(e.target.value)); setDraft((d) => d && ({ ...d, billing_profile_id: p?.id ?? null, terms_text: d.terms_text === profile?.default_terms_text ? p?.default_terms_text ?? "" : d.terms_text })); }} />
               </Field>
-              <Field label="Account" hint="Optional. Fills in the customer details below.">
+              <Field label="Account">
                 <Select value={draft.account_id ?? ""} options={(accounts.data ?? []).map((a) => ({ value: a.id, label: a.name }))} placeholder="No linked account" onChange={(e) => pickAccount(e.target.value ? Number(e.target.value) : null)} />
               </Field>
               <Field label="Engagement" className="col-span-2">
@@ -195,10 +195,10 @@ export default function InvoiceEditorPage() {
               <Field label="Customer name *" className="col-span-2" error={showErrors && !draft.billed_to_name.trim() ? "Customer name is required." : undefined}>
                 <Input value={draft.billed_to_name} maxLength={200} onChange={(e) => set("billed_to_name", e.target.value)} />
               </Field>
-              <Field label="Address" className="col-span-2" hint="One line per row, as it should print.">
+              <Field label="Address" className="col-span-2">
                 <Textarea rows={3} value={draft.billed_to_address} maxLength={1000} onChange={(e) => set("billed_to_address", e.target.value)} />
               </Field>
-              <Field label="Billing email" hint="Default recipient when sending."><Input type="email" value={draft.billed_to_email} onChange={(e) => set("billed_to_email", e.target.value)} /></Field>
+              <Field label="Billing email"><Input type="email" value={draft.billed_to_email} onChange={(e) => set("billed_to_email", e.target.value)} /></Field>
               <Field label="CC" hint="Comma-separated."><Input value={draft.billed_to_cc} maxLength={500} onChange={(e) => set("billed_to_cc", e.target.value)} /></Field>
             </fieldset>
           </Card>
@@ -209,12 +209,12 @@ export default function InvoiceEditorPage() {
 
           <Card title="Dates and terms">
             <fieldset disabled={!editable} className="grid grid-cols-3 gap-4">
-              <Field label="Date of issue" hint="Defaults to the day it is issued."><Input type="date" value={draft.issue_date} onChange={(e) => set("issue_date", e.target.value)} /></Field>
+              <Field label="Date of issue" hint="Defaults to issue day."><Input type="date" value={draft.issue_date} onChange={(e) => set("issue_date", e.target.value)} /></Field>
               <Field label="Due date" hint={profile ? `Defaults to ${plural(profile.default_terms_days, "day")} after issue.` : undefined}><Input type="date" value={draft.due_date} onChange={(e) => set("due_date", e.target.value)} /></Field>
               <Field label="Currency"><Input value={draft.currency} maxLength={3} onChange={(e) => set("currency", e.target.value.toUpperCase())} /></Field>
               <TemplateField label="Terms" className="col-span-3" value={draft.terms_text} maxLength={500} onChange={(text) => set("terms_text", text)}
-                values={termValues} disabled={!editable} hint="Placeholders are filled in when the invoice is issued." />
-              <Field label="Notes" className="col-span-3" hint="Printed under the terms."><Textarea rows={2} value={draft.notes} maxLength={5000} onChange={(e) => set("notes", e.target.value)} /></Field>
+                values={termValues} disabled={!editable} />
+              <Field label="Notes" className="col-span-3"><Textarea rows={2} value={draft.notes} maxLength={5000} onChange={(e) => set("notes", e.target.value)} /></Field>
             </fieldset>
           </Card>
         </div>

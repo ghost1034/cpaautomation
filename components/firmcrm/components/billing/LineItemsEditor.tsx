@@ -12,8 +12,8 @@ export function lineErrors(lines: LineDraft[]): Record<string, string> {
   const out: Record<string, string> = {};
   for (const l of lines) {
     if (!l.description.trim()) out[l.key] = "Add a description.";
-    else if (parseHundredths(l.unit_cost) == null) out[l.key] = "Unit cost must be a non-negative amount with up to 2 decimals.";
-    else if (!(Number(parseHundredths(l.quantity)) > 0)) out[l.key] = "Quantity must be greater than 0 with up to 2 decimals.";
+    else if (parseHundredths(l.unit_cost) == null) out[l.key] = "Enter a valid unit cost.";
+    else if (!(Number(parseHundredths(l.quantity)) > 0)) out[l.key] = "Enter a quantity above 0.";
   }
   return out;
 }

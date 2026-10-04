@@ -46,8 +46,8 @@ export function TemplateField({ label, value, onChange, values, multiline = fals
     onFocus: () => { focused.current = true; },
   };
   let notice: ReactNode = null;
-  if (!renderable) notice = <>Unmatched <code>{"{"}</code> or <code>{"}"}</code>: placeholders won’t be filled and the text prints exactly as typed. Use <code>{"{{"}</code> for a literal brace.</>;
-  else if (unknown.length) notice = <>{unknown.map((k, i) => <span key={k}>{i > 0 && ", "}<code>{`{${k}}`}</code></span>)} {unknown.length === 1 ? "isn’t a recognized field" : "aren’t recognized fields"} and will print as typed.</>;
+  if (!renderable) notice = <>Unmatched <code>{"{"}</code> or <code>{"}"}</code>. Placeholders won’t be filled.</>;
+  else if (unknown.length) notice = <>{unknown.map((k, i) => <span key={k}>{i > 0 && ", "}<code>{`{${k}}`}</code></span>)} {unknown.length === 1 ? "isn’t a recognized field" : "aren’t recognized fields"}.</>;
   return (
     <div className={cn("min-w-0", className)}>
       <Field label={label} hint={hint} error={error} errorId={errorId}>

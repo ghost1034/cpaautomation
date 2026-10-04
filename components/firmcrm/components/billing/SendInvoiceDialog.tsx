@@ -45,7 +45,7 @@ export function SendInvoiceDialog({ invoice, profile, onClose, onSent }: { invoi
   return (
     <Modal open onClose={onClose} title={`Send invoice ${invoice.number ?? ""}`.trim()} size="wide"
       footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" onClick={submit} disabled={busy}>{busy ? "Sending…" : "Send invoice"}</Button></>}>
-      {invoice.status === "draft" && <p className="mb-4 rounded-crm-md border border-crm-warn-200 bg-crm-warn-50 px-3 py-2 text-[13px] text-crm-warn-700">Sending issues this draft: it gets the next invoice number and can no longer be edited.</p>}
+      {invoice.status === "draft" && <p className="mb-4 rounded-crm-md border border-crm-warn-200 bg-crm-warn-50 px-3 py-2 text-[13px] text-crm-warn-700">Sending issues this draft. It can no longer be edited.</p>}
       <div className="grid grid-cols-2 gap-4">
         <Field label="To *" error={v.shown("to")} errorId={v.errorId("to")}><Input type="email" value={values.to} onChange={set("to")} {...v.fieldProps("to")} /></Field>
         <Field label="CC" hint="Comma-separated" error={v.shown("cc")} errorId={v.errorId("cc")}><Input value={values.cc} onChange={set("cc")} {...v.fieldProps("cc")} /></Field>

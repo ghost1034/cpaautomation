@@ -30,13 +30,13 @@ export default function BillingPage() {
   const canCreate = (profiles.data?.length ?? 0) > 0;
   return (
     <div>
-      <PageHeader title="Billing" subtitle="Create invoices for accounts, download them as PDF and email them to customers."
+      <PageHeader title="Billing"
         actions={tab === "invoices" && <Button variant="primary" disabled={!canCreate} title={canCreate ? undefined : "Create a billing profile first"} onClick={() => nav("/billing/new")}><Plus size={14} />New invoice</Button>} />
       <Tabs value={tab} onChange={setTab} tabs={[{ key: "invoices", label: "Invoices" }, { key: "profiles", label: "Billing profiles", count: profiles.data?.length }]} />
       <div className="mt-5">
         {tab === "invoices"
           ? (profiles.data && !profiles.data.length
-            ? <Card><Empty title="Set up billing first" hint={atLeast("manager") ? "Add a billing profile with your company address and wire instructions; it appears on every invoice." : "Ask a manager to add a billing profile with the firm's address and wire instructions."}
+            ? <Card><Empty title="Set up billing first" hint={atLeast("manager") ? undefined : "Ask a manager to add a billing profile."}
                 action={atLeast("manager") ? <Button variant="primary" onClick={() => setTab("profiles")}>Add billing profile</Button> : undefined} /></Card>
             : <InvoiceList />)
           : <ProfileList profiles={profiles.data} />}
@@ -68,7 +68,7 @@ function InvoiceList() {
     </div>
     <div className="card overflow-hidden">
       <DataTable rows={invoices.data?.items} columns={cols} loading={invoices.isLoading} twoLine onRowClick={(i) => nav(`/billing/${i.id}`)} sort={sorting.sort} onSortChange={sorting.onSortChange}
-        empty={<Empty title={status || q ? "No matching invoices" : "No invoices yet"} hint={status || q ? undefined : "Create one from here or from an account's Invoices tab."} />} />
+        empty={<Empty title={status || q ? "No matching invoices" : "No invoices yet"} />} />
       <Pagination total={invoices.data?.total} limit={pager.limit} offset={pager.offset} onOffset={pager.setOffset} onLimit={pager.setLimit} />
     </div>
   </>;
@@ -80,17 +80,16 @@ function ProfileList({ profiles }: { profiles: BillingProfile[] | undefined }) {
   const qc = useQueryClient(); const confirm = useConfirm(); const { toast, error } = useToast();
   const archive = useMutation({ mutationFn: (id: number) => billingApi.archiveProfile(id), onSuccess: () => { qc.invalidateQueries({ queryKey: ["billing-profiles"] }); toast("Billing profile archived"); }, onError: error });
   return <>
-    <div className="mb-4 flex items-center justify-between gap-3">
-      <p className="text-[13px] text-crm-sand-600">Your company details and wire instructions as printed on invoices. Issued invoices keep the details they were issued with.</p>
+    <div className="mb-4 flex items-center justify-end gap-3">
       {canEdit && <Button variant="primary" onClick={() => setEditing("new")}><Plus size={14} />New profile</Button>}
     </div>
-    {profiles && !profiles.length && <Card><Empty title="No billing profiles" hint={canEdit ? "Add your company address and bank details to start invoicing." : "A manager can add one."} /></Card>}
+    {profiles && !profiles.length && <Card><Empty title="No billing profiles" hint={canEdit ? undefined : "A manager can add one."} /></Card>}
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       {profiles?.map((p) => (
         <Card key={p.id} title={<span className="flex items-center gap-2"><i className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: p.accent_color }} aria-hidden />{p.label}{p.is_default && <Badge tone="blue">Default</Badge>}</span>}
           actions={canEdit && <>
             <Button size="sm" variant="ghost" onClick={() => setEditing(p)}><Pencil size={12} />Edit</Button>
-            <Button size="sm" variant="ghost" onClick={async () => { if (await confirm({ title: `Archive ${p.label}?`, body: "It can no longer be chosen for new invoices. Existing invoices are unchanged.", confirmLabel: "Archive" })) archive.mutate(p.id); }}><Archive size={12} />Archive</Button>
+            <Button size="sm" variant="ghost" onClick={async () => { if (await confirm({ title: `Archive ${p.label}?`, body: "Existing invoices are unchanged.", confirmLabel: "Archive" })) archive.mutate(p.id); }}><Archive size={12} />Archive</Button>
           </>}>
           <DL columns={2} items={[
             { label: "Company", value: p.issuer_name },
