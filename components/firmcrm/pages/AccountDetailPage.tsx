@@ -2,7 +2,7 @@ import { SharedClientPanel } from "../components/crm/SharedClientPanel";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@/components/firmcrm/lib/query";
 import { Link, useNavigate, useParams } from "@/components/firmcrm/lib/navigation";
-import { Archive, ArchiveRestore, Lock, Pencil, Plus, ShieldCheck } from "lucide-react";
+import { Archive, ArchiveRestore, Lock, Pencil, Plus, ReceiptText, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/components/firmcrm/lib/auth";
 import { accountsApi, billingApi, contactsApi, conflictsApi, engagementsApi, oppsApi } from "@/components/firmcrm/api";
 import type { Account, Contact, Engagement, Invoice, Opportunity } from "@/components/firmcrm/api/types";
@@ -97,6 +97,8 @@ export default function AccountDetailPage() {
     { key: "pa", header: "Practice area", hideBelow: 1280, render: (e) => cellText(e.practice_area_name, 180) }, { key: "partner", header: "Responsible partner", width: "160px", hideBelow: 1280, render: (e) => cellText(e.responsible_partner_name) },
     { key: "status", header: "Status", width: "140px", render: (e) => <Badge dot tone={statusTone(e.status)}>{titleCase(e.status)}</Badge> }, { key: "val", header: "Annual value", align: "right", width: "128px", render: (e) => cellMoney(e.annual_value) },
     { key: "start", header: "Start", width: "120px", hideBelow: 1180, render: (e) => cellDate(e.start_date) },
+    ...(a.is_archived ? [] : [{ key: "actions", header: "", width: "96px", render: (e: Engagement) => (
+      <div className="flex justify-end"><Button size="sm" onClick={() => nav(`/billing/new?engagementId=${e.id}`)}><ReceiptText size={12} />Bill</Button></div>) }]),
   ];
   return (
     <div>

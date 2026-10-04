@@ -110,7 +110,8 @@ def test_account_prefill_and_engagement_must_match(crm):
     call(crm, 'post', '/contacts', expected=201, json={'first_name': 'Ada', 'last_name': 'Payable', 'email': 'ap@sb.example', 'account_id': a['id']})
     prefill = call(crm, 'get', f'/billing/invoices/prefill?account_id={a["id"]}')
     assert prefill == {'account_id': a['id'], 'billed_to_name': 'SB Investment Advisers (US) Inc.',
-                       'billed_to_address': '300 El Camino Real\nMenlo Park, California 94025', 'billed_to_email': 'ap@sb.example'}
+                       'billed_to_address': '300 El Camino Real\nMenlo Park, California 94025', 'billed_to_email': 'ap@sb.example',
+                       'engagement_id': None, 'lines': []}
     other = account(crm, 'Other')
     engagement = call(crm, 'post', '/engagements', expected=201, json={'name': 'Advisory', 'account_id': other['id']})
     p = profile(crm)
@@ -119,6 +120,26 @@ def test_account_prefill_and_engagement_must_match(crm):
     invoice = draft(crm, p, account_id=a['id'])
     assert invoice['account_name'] == 'SB Investment Advisers (US) Inc.'
     assert call(crm, 'get', f'/billing/invoices?account_id={a["id"]}')['total'] == 1
+
+
+def test_engagement_prefill(crm):
+    a = call(crm, 'post', '/accounts', expected=201, json={'name': 'Northwind LLC', 'city': 'Austin', 'state': 'Texas'})
+    fixed = call(crm, 'post', '/engagements', expected=201, json={'name': '2026 Audit', 'account_id': a['id'], 'fee_type': 'fixed',
+                                                                   'annual_value': 48000, 'external_ref': 'M-104'})
+    prefill = call(crm, 'get', f'/billing/invoices/prefill?engagement_id={fixed["id"]}')
+    assert prefill['account_id'] == a['id'] and prefill['engagement_id'] == fixed['id']
+    assert prefill['billed_to_name'] == 'Northwind LLC' and prefill['billed_to_address'] == 'Austin, Texas'
+    assert prefill['lines'] == [{'description': '2026 Audit (M-104)', 'unit_cost': '48000.00', 'quantity': '1'}]
+    retainer = call(crm, 'post', '/engagements', expected=201, json={'name': 'Advisory', 'account_id': a['id'], 'fee_type': 'retainer',
+                                                                      'annual_value': 10000})
+    line = call(crm, 'get', f'/billing/invoices/prefill?engagement_id={retainer["id"]}')['lines'][0]
+    assert line == {'description': 'Advisory - monthly fee', 'unit_cost': '833.33', 'quantity': '1'}
+    hourly = call(crm, 'post', '/engagements', expected=201, json={'name': 'Tax', 'account_id': a['id'], 'annual_value': 5000})
+    assert call(crm, 'get', f'/billing/invoices/prefill?engagement_id={hourly["id"]}')['lines'][0]['unit_cost'] is None
+    call(crm, 'get', '/billing/invoices/prefill', expected=422)
+    call(crm, 'get', f'/billing/invoices/prefill?engagement_id={fixed["id"]}', 'other', 404)
+    wall(crm, a)
+    call(crm, 'get', f'/billing/invoices/prefill?engagement_id={fixed["id"]}', 'staff', 404)
 
 
 def test_tenant_isolation(crm):

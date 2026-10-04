@@ -77,6 +77,20 @@ def prefill_from_account(db: Session, account: Account) -> dict[str, Any]:
             "billed_to_email": preferred.email if preferred else None}
 
 
+def prefill_from_engagement(db: Session, engagement: Engagement) -> dict[str, Any]:
+    """Account billing details plus one starting line priced from the engagement's fee arrangement."""
+    value = Decimal(str(engagement.annual_value or 0))
+    description = engagement.name + (f" ({engagement.external_ref})" if engagement.external_ref else "")
+    unit_cost = None
+    if value > 0 and engagement.fee_type in ("fixed", "value"):
+        unit_cost = value.quantize(CENTS, rounding=ROUND_HALF_UP)
+    elif value > 0 and engagement.fee_type in ("retainer", "recurring"):
+        unit_cost = (value / 12).quantize(CENTS, rounding=ROUND_HALF_UP)
+        description += " - monthly fee"
+    return {**prefill_from_account(db, engagement.account), "engagement_id": engagement.id,
+            "lines": [{"description": description, "unit_cost": unit_cost, "quantity": Decimal("1")}]}
+
+
 # ---- profiles
 
 def set_default_profile(db: Session, profile: BillingProfile) -> None:

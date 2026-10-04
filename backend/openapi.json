@@ -42832,10 +42832,33 @@
           {
             "name": "account_id",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "integer",
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "Account Id"
+            }
+          },
+          {
+            "name": "engagement_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Engagement Id"
             }
           }
         ],
@@ -62785,11 +62808,53 @@
         ],
         "title": "FirmCrmInvoiceOut"
       },
+      "FirmCrmInvoicePrefillLineOut": {
+        "properties": {
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "unit_cost": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Cost"
+          },
+          "quantity": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Quantity",
+            "default": "1"
+          }
+        },
+        "type": "object",
+        "required": [
+          "description"
+        ],
+        "title": "FirmCrmInvoicePrefillLineOut"
+      },
       "FirmCrmInvoicePrefillOut": {
         "properties": {
           "account_id": {
             "type": "integer",
             "title": "Account Id"
+          },
+          "engagement_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engagement Id"
           },
           "billed_to_name": {
             "type": "string",
@@ -62816,6 +62881,13 @@
               }
             ],
             "title": "Billed To Email"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/FirmCrmInvoicePrefillLineOut"
+            },
+            "type": "array",
+            "title": "Lines"
           }
         },
         "type": "object",

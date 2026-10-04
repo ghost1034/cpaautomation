@@ -16479,16 +16479,32 @@ export interface components {
             /** Deliveries */
             deliveries?: components["schemas"]["FirmCrmInvoiceDeliveryOut"][];
         };
+        /** FirmCrmInvoicePrefillLineOut */
+        FirmCrmInvoicePrefillLineOut: {
+            /** Description */
+            description: string;
+            /** Unit Cost */
+            unit_cost?: string | null;
+            /**
+             * Quantity
+             * @default 1
+             */
+            quantity: string;
+        };
         /** FirmCrmInvoicePrefillOut */
         FirmCrmInvoicePrefillOut: {
             /** Account Id */
             account_id: number;
+            /** Engagement Id */
+            engagement_id?: number | null;
             /** Billed To Name */
             billed_to_name: string;
             /** Billed To Address */
             billed_to_address?: string | null;
             /** Billed To Email */
             billed_to_email?: string | null;
+            /** Lines */
+            lines?: components["schemas"]["FirmCrmInvoicePrefillLineOut"][];
         };
         /** FirmCrmInvoiceSendIn */
         FirmCrmInvoiceSendIn: {
@@ -47604,8 +47620,9 @@ export interface operations {
     };
     prefill_invoice_api_firmcrm_billing_invoices_prefill_get: {
         parameters: {
-            query: {
-                account_id: number;
+            query?: {
+                account_id?: number | null;
+                engagement_id?: number | null;
             };
             header?: never;
             path?: never;

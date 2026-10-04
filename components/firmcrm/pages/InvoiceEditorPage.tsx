@@ -71,8 +71,10 @@ export default function InvoiceEditorPage() {
       const d: Draft = { billing_profile_id: p?.id ?? null, account_id: null, engagement_id: null, billed_to_name: "", billed_to_address: "", billed_to_email: "", billed_to_cc: "",
         issue_date: "", due_date: "", terms_text: p?.default_terms_text ?? "", currency: settings.default_currency || "USD", notes: "", lines: [newLine()] };
       setDraft(d); setBaseline(snapshot(d));
-      const accountId = Number(new URLSearchParams(window.location.search).get("accountId"));
-      if (accountId) pickAccount(accountId, d);
+      const search = new URLSearchParams(window.location.search);
+      const engagementId = Number(search.get("engagementId")), accountId = Number(search.get("accountId"));
+      if (engagementId) fromEngagement(engagementId);
+      else if (accountId) pickAccount(accountId, d);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadedKey, profiles.data]);
@@ -90,8 +92,18 @@ export default function InvoiceEditorPage() {
     setDraft((d) => { const cur = d ?? base!; return { ...cur, account_id: accountId, engagement_id: null }; });
     if (!accountId) return;
     try {
-      const pre = await billingApi.prefill(accountId);
+      const pre = await billingApi.prefill({ account_id: accountId });
       setDraft((d) => d && ({ ...d, billed_to_name: pre.billed_to_name, billed_to_address: pre.billed_to_address ?? "", billed_to_email: pre.billed_to_email ?? d.billed_to_email }));
+    } catch (err) { error(err); }
+  }
+
+  /** Start a new draft from an engagement: its account's billing details plus a line priced from the fee arrangement. */
+  async function fromEngagement(engagementId: number) {
+    try {
+      const pre = await billingApi.prefill({ engagement_id: engagementId });
+      const lines = (pre.lines ?? []).map((l) => newLine({ description: l.description, unit_cost: l.unit_cost ?? "", quantity: String(Number(l.quantity)) }));
+      setDraft((d) => d && ({ ...d, account_id: pre.account_id, engagement_id: pre.engagement_id ?? null, billed_to_name: pre.billed_to_name,
+        billed_to_address: pre.billed_to_address ?? "", billed_to_email: pre.billed_to_email ?? "", lines: lines.length ? lines : d.lines }));
     } catch (err) { error(err); }
   }
 

@@ -771,11 +771,19 @@ class FirmCrmInvoiceOut(FirmCrmORM):
     deliveries: list[FirmCrmInvoiceDeliveryOut] = Field(default_factory=list)
 
 
+class FirmCrmInvoicePrefillLineOut(BaseModel):
+    description: str
+    unit_cost: Decimal | None = None  # None when the fee can't be derived (hourly, contingency, no value)
+    quantity: Decimal = Decimal("1")
+
+
 class FirmCrmInvoicePrefillOut(BaseModel):
     account_id: int
+    engagement_id: int | None = None
     billed_to_name: str
     billed_to_address: str | None = None
     billed_to_email: str | None = None
+    lines: list[FirmCrmInvoicePrefillLineOut] = Field(default_factory=list)
 
 
 class FirmCrmInvoiceSendIn(BaseModel):

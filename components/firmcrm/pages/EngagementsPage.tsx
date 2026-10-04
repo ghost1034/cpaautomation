@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@/components/firmcrm/lib/query";
-import { Link } from "@/components/firmcrm/lib/navigation";
+import { Link, useNavigate } from "@/components/firmcrm/lib/navigation";
 import { dataApi, engagementsApi } from "@/components/firmcrm/api";
-import { ArrowUpRight, Download } from "lucide-react";
+import { ArrowUpRight, Download, ReceiptText } from "lucide-react";
 import { Pagination, usePager } from "@/components/firmcrm/components/ui/Pagination";
 import type { Engagement } from "@/components/firmcrm/api/types";
 import { Badge, Button, Empty, PageHeader, Select, statusTone } from "@/components/firmcrm/components/ui";
@@ -17,7 +17,7 @@ import { NameCell, ResultCount, cellDate, cellMoney, cellText } from "@/componen
 
 export default function EngagementsPage() {
   const money = useMoney();
-  const qc = useQueryClient(); const { toast } = useToast(); const { atLeast } = useAuth();
+  const qc = useQueryClient(); const nav = useNavigate(); const { toast } = useToast(); const { atLeast } = useAuth();
   const [status, setStatus] = useState("active"); const [editing, setEditing] = useState<Engagement | null>(null);
   const pager = usePager(50); const { error } = useToast();
   // Server-side ordering so sort + paging agree (flows QA #10); practice area and partner have no API sort field.
@@ -46,6 +46,10 @@ export default function EngagementsPage() {
     { key: "fee", header: "Fee type", width: "100px", hideBelow: 1280, render: (e) => cellText(titleCase(e.fee_type)) },
     { key: "val", header: "Annual value", align: "right", width: "128px", sort: (e) => e.annual_value, render: (e) => cellMoney(e.annual_value) },
     { key: "start", header: "Start", sort: (e) => e.start_date ?? "", width: "120px", hideBelow: 1180, render: (e) => cellDate(e.start_date) },
+    { key: "actions", header: "", width: "96px", render: (e) => (
+      <div className="flex justify-end" onClick={(ev) => ev.stopPropagation()} onKeyDown={(ev) => ev.stopPropagation()}>
+        <Button size="sm" onClick={() => nav(`/billing/new?engagementId=${e.id}`)}><ReceiptText size={12} />Bill</Button>
+      </div>) },
   ];
   const total = engs.data?.items.reduce((s, e) => s + e.annual_value, 0) ?? 0;
   const empty = <Empty title={status ? `No ${status.replace("_", " ")} engagements` : "No engagements yet"} hint="Engagements are created automatically when an opportunity is Closed Won."

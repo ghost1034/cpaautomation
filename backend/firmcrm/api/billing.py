@@ -11,7 +11,7 @@ from firmcrm.api.common import SortDir, account_names, apply_sort, apply_updates
 from firmcrm.core.audit import record
 from firmcrm.core.db import get_db
 from firmcrm.core.deps import ROLE_RANK, at_least, get_current_user
-from firmcrm.core.errors import Forbidden
+from firmcrm.core.errors import DomainError, Forbidden
 from firmcrm.enums import InvoiceStatus
 from firmcrm.models import Account, BillingProfile, Engagement, Invoice, User
 from firmcrm.schemas import (
@@ -27,7 +27,7 @@ from firmcrm.schemas import (
     FirmCrmInvoiceVoidIn,
     FirmCrmPage,
 )
-from firmcrm.services import billing
+from firmcrm.services import billing, visibility
 
 router = APIRouter(route_class=FirmCrmRoute, prefix="/billing", tags=["billing"])
 
@@ -131,7 +131,14 @@ def list_invoices(status: InvoiceStatus | None = None, account_id: int | None = 
 
 
 @router.get("/invoices/prefill", response_model=FirmCrmInvoicePrefillOut)
-def prefill_invoice(account_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def prefill_invoice(account_id: int | None = None, engagement_id: int | None = None, db: Session = Depends(get_db),
+                    actor: User = Depends(get_current_user)):
+    if engagement_id is not None:
+        engagement = get_or_404(db, Engagement, engagement_id, "Engagement")
+        visibility.assert_account_visible(db, actor, engagement.account_id)
+        return billing.prefill_from_engagement(db, engagement)
+    if account_id is None:
+        raise DomainError("Pass an account_id or engagement_id", code="prefill_target_required", status_code=422)
     return billing.prefill_from_account(db, get_or_404(db, Account, account_id, "Account"))
 
 
