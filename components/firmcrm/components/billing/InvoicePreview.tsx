@@ -41,7 +41,7 @@ export function InvoicePreview({ issuer, number, issueDate, billedToName, billed
             <div className={`${label} mt-3`}>Date of issue</div><div>{usDate(issueDate)}</div>
           </div>
           <div className="min-w-0 flex-1">
-            <div className="grid grid-cols-[1fr_17%_14%_18%] gap-1 px-1 py-0.5 text-[6.5px] font-bold text-white" style={accent}><span>DESCRIPTION</span><span>UNIT COST</span><span>QTY/HR RATE</span><span>AMOUNT</span></div>
+            <div className="grid grid-cols-[1fr_17%_14%_18%] gap-1 px-1 py-0.5 text-[6.5px] font-bold text-white" style={accent}><span>DESCRIPTION</span><span className="text-right">UNIT COST</span><span>QTY/HR RATE</span><span className="text-right">AMOUNT</span></div>
             {rows.map((l, i) => (
               <div key={l?.key ?? `pad-${i}`} className="mt-[2px] grid min-h-[13px] grid-cols-[1fr_17%_14%_18%] gap-1 bg-[#f2f2f2] px-1 py-0.5 text-[6.5px]">
                 {l && <><span className="truncate">{l.description}</span><span className="text-right">{formatCents(parseHundredths(l.unit_cost) ?? 0, currency)}</span><span>{l.quantity}</span><span className="text-right">{(() => { const c = lineAmountCents(l.unit_cost, l.quantity); return c == null ? "—" : formatCents(c, currency); })()}</span></>}
