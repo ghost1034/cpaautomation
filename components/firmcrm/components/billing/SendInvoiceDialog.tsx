@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { billingApi } from "@/components/firmcrm/api";
 import type { BillingProfile, Invoice } from "@/components/firmcrm/api/types";
-import { Button, Field, Input, Modal, Textarea } from "@/components/firmcrm/components/ui";
+import { Button, Field, Input, Modal } from "@/components/firmcrm/components/ui";
 import { useFieldValidation } from "@/components/firmcrm/components/ui/Form";
 import { useToast } from "@/components/firmcrm/components/ui/Toast";
+import { formatAmount } from "@/components/firmcrm/lib/billingMath";
+import { TemplateField } from "./TemplateField";
+import { invoicePlaceholderValues } from "./templatePlaceholders";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const splitEmails = (s: string) => s.split(/[,;\s]+/).map((x) => x.trim()).filter(Boolean);
@@ -17,12 +20,17 @@ export function SendInvoiceDialog({ invoice, profile, onClose, onSent }: { invoi
     message: profile?.email_message_template ?? "",
   });
   const [busy, setBusy] = useState(false);
+  // Issued invoices keep the issuer captured at issue time; drafts take it from the current profile.
+  const issuerName = (invoice.issuer_snapshot as { issuer_name?: string } | null | undefined)?.issuer_name ?? profile?.issuer_name;
+  const previewValues = useMemo(() => invoicePlaceholderValues(invoice, formatAmount(invoice.total, invoice.currency), issuerName, profile?.default_terms_days),
+    [invoice, issuerName, profile?.default_terms_days]);
   const v = useFieldValidation(values, {
     to: (x) => (!x ? "Recipient is required." : EMAIL.test(String(x).trim()) ? null : "Enter a valid email address."),
     cc: (x) => (splitEmails(String(x ?? "")).every((e) => EMAIL.test(e)) ? null : "Separate valid addresses with commas."),
     subject: (x) => (x ? null : "Subject is required."),
   });
   const set = (k: keyof typeof values) => (e: { target: { value: string } }) => setValues((s) => ({ ...s, [k]: e.target.value }));
+  const setText = (k: keyof typeof values) => (text: string) => setValues((s) => ({ ...s, [k]: text }));
   const submit = async () => {
     v.touchAll();
     if (!v.valid) return;
@@ -41,10 +49,10 @@ export function SendInvoiceDialog({ invoice, profile, onClose, onSent }: { invoi
       <div className="grid grid-cols-2 gap-4">
         <Field label="To *" error={v.shown("to")} errorId={v.errorId("to")}><Input type="email" value={values.to} onChange={set("to")} {...v.fieldProps("to")} /></Field>
         <Field label="CC" hint="Comma-separated" error={v.shown("cc")} errorId={v.errorId("cc")}><Input value={values.cc} onChange={set("cc")} {...v.fieldProps("cc")} /></Field>
-        <Field label="Subject *" className="col-span-2" error={v.shown("subject")} errorId={v.errorId("subject")}><Input value={values.subject} onChange={set("subject")} {...v.fieldProps("subject")} /></Field>
-        <Field label="Message" className="col-span-2" hint="{invoice_number}, {total}, {due_date}, {customer_name} and {issuer_name} are filled in when sent. The PDF is attached.">
-          <Textarea rows={7} value={values.message} onChange={set("message")} />
-        </Field>
+        <TemplateField label="Subject *" className="col-span-2" value={values.subject} onChange={setText("subject")} values={previewValues} maxLength={300}
+          error={v.shown("subject")} errorId={v.errorId("subject")} controlProps={v.fieldProps("subject")} />
+        <TemplateField label="Message" className="col-span-2" multiline rows={7} value={values.message} onChange={setText("message")} values={previewValues}
+          maxLength={5000} hint="The invoice PDF is attached." />
       </div>
     </Modal>
   );

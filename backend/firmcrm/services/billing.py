@@ -175,10 +175,10 @@ def issue(db: Session, actor: User, invoice: Invoice) -> Invoice:
     profile = _active_profile(db, invoice.billing_profile_id)
     invoice.issue_date = invoice.issue_date or date.today()
     invoice.due_date = invoice.due_date or invoice.issue_date + timedelta(days=profile.default_terms_days)
+    invoice.number = _allocate_number(db)  # before rendering, so {invoice_number} in the terms gets the real number
     invoice.terms_text = render_template(invoice.terms_text or profile.default_terms_text, invoice, profile.issuer_name)
     invoice.issuer_snapshot = {field: getattr(profile, field) for field in SNAPSHOT_FIELDS}
     invoice.account_number_ciphertext = profile.account_number_ciphertext
-    invoice.number = _allocate_number(db)
     invoice.status = "issued"
     invoice.issued_at = utcnow()
     record(db, actor_id=actor.id, action="invoice.issue", entity_type="invoice", entity_id=invoice.id,
@@ -212,6 +212,7 @@ class _SafeDict(dict):
 
 
 def render_template(template: str, invoice: Invoice, issuer_name: str) -> str:
+    # These keys are mirrored by TEMPLATE_PLACEHOLDERS in components/firmcrm/components/billing/templatePlaceholders.ts.
     values = _SafeDict(invoice_number=invoice.number or "DRAFT", issuer_name=issuer_name or "",
                        customer_name=invoice.billed_to_name or "", total=format_money(invoice.total, invoice.currency),
                        due_date=format_date(invoice.due_date), issue_date=format_date(invoice.issue_date))

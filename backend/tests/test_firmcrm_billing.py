@@ -176,3 +176,13 @@ def test_send_records_delivery_without_false_success(crm, monkeypatch, outcome):
         assert len(sent) == 1  # copies are not sent when the primary delivery fails
     assert after['deliveries'][0]['status'] == delivery['status']
     call(crm, 'post', f'/billing/invoices/{invoice["id"]}/send', 'staff', 403, json={'to': 'ap@sb.example'})
+
+
+def test_issued_terms_fill_every_placeholder(crm):
+    # The billing UI offers exactly these placeholders (templatePlaceholders.ts); all must be filled when issuing.
+    keys = ['invoice_number', 'customer_name', 'total', 'issue_date', 'due_date', 'issuer_name']
+    p = profile(crm)
+    invoice = draft(crm, p, issue_date='2026-03-01', due_date='2026-03-31',
+                    terms_text=' | '.join('{' + key + '}' for key in keys) + ' | {unknown}')
+    issued = call(crm, 'post', f'/billing/invoices/{invoice["id"]}/issue')
+    assert issued['terms_text'] == '00001 | SB Investment Advisers (US) Inc. | $43,000.00 | 03/01/2026 | 03/31/2026 | CPA Automation, Inc. | {unknown}'
