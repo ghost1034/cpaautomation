@@ -203,14 +203,14 @@ export function FormModal({ open, onClose, title, fields, initial, values: contr
     try { await onSubmit(values); onClose(); } catch (err) { error(err); } finally { setBusy(false); }
   };
   return (
-    <Modal open={open} onClose={onClose} title={title} width={width} size={size}>
-      <form onSubmit={submit} noValidate>
+    <Modal open={open} onClose={onClose} title={title} width={width} size={size}
+           footer={<>
+             <Button onClick={onClose}>Cancel</Button>
+             {/* `form` attribute ties the submit button to the form, which lives in the scrolling body. */}
+             <Button variant="primary" type="submit" form={formId} disabled={busy}>{busy ? "Saving…" : submitLabel}</Button>
+           </>}>
+      <form id={formId} onSubmit={submit} noValidate>
         <SchemaForm fields={fields} values={values} onChange={setValues} showAllErrors={attempted} idPrefix={formId} />
-        {/* Footer lives inside the form so the primary button submits; styled to match Modal's footer slot. */}
-        <div className="-mx-5 -mb-5 mt-5 flex justify-end gap-2 rounded-b-xl border-t border-crm-sand-150 bg-crm-sand-25 px-5 py-3">
-          <Button onClick={onClose}>Cancel</Button>
-          <Button variant="primary" type="submit" disabled={busy}>{busy ? "Saving…" : submitLabel}</Button>
-        </div>
       </form>
     </Modal>
   );

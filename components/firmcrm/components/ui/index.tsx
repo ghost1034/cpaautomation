@@ -118,6 +118,7 @@ export type OverlayProps = {
 
 /**
  * Centered dialog (§6.11). Default 560px; `size="wide"` 720px. The legacy `width` class prop still works.
+ * Capped to the viewport; the body scrolls between the fixed header and footer.
  * Focus: first field on open (else close button), Tab trapped inside, restored to the opener on close; Escape closes.
  */
 export function Modal({ open, onClose, title, children, footer, width, size = "default", initialFocus, hideClose }: OverlayProps & { width?: string; size?: "default" | "wide" }) {
@@ -128,14 +129,14 @@ export function Modal({ open, onClose, title, children, footer, width, size = "d
   if (!open) return null;
   const w = width ? (MODAL_WIDTH[width] ?? width) : size === "wide" ? "max-w-[720px]" : "max-w-[560px]";
   return (
-    <div className="fade-in fixed inset-0 z-crm-modal flex items-start justify-center overflow-y-auto bg-[rgba(26,25,22,0.32)] p-4 pt-[8vh]" onMouseDown={onClose}>
-      <div ref={panel} className={cn("modal-in w-full rounded-crm-xl border border-crm-sand-150 bg-crm-sand-0 shadow-crm-modal outline-none", w)} onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
-        <header className="flex items-center justify-between gap-4 border-b border-crm-sand-150 px-5 py-4">
+    <div className="fade-in fixed inset-0 z-crm-modal flex items-start justify-center bg-[rgba(26,25,22,0.32)] p-4 pt-[8vh]" onMouseDown={onClose}>
+      <div ref={panel} className={cn("modal-in flex max-h-full w-full flex-col rounded-crm-xl border border-crm-sand-150 bg-crm-sand-0 shadow-crm-modal outline-none", w)} onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
+        <header className="flex shrink-0 items-center justify-between gap-4 border-b border-crm-sand-150 px-5 py-4">
           <h2 id={titleId} className="min-w-0 truncate text-[15px] leading-[22px] font-semibold tracking-[-0.01em] text-crm-sand-900">{title}</h2>
           {!hideClose && <button ref={closeBtn} type="button" onClick={onClose} aria-label="Close" className="grid h-7 w-7 shrink-0 place-items-center rounded-crm-md text-crm-sand-500 hover:bg-crm-sand-100 hover:text-crm-sand-900"><X size={16} /></button>}
         </header>
-        <div className="px-5 py-5">{children}</div>
-        {footer && <footer className="flex justify-end gap-2 rounded-b-xl border-t border-crm-sand-150 bg-crm-sand-25 px-5 py-3">{footer}</footer>}
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">{children}</div>
+        {footer && <footer className="flex shrink-0 justify-end gap-2 rounded-b-xl border-t border-crm-sand-150 bg-crm-sand-25 px-5 py-3">{footer}</footer>}
       </div>
     </div>
   );
