@@ -8,7 +8,7 @@ from typing import Any
 SUPPORTED_VERTEX_MODELS = (
     {"id": "gemini-3.8-flash", "label": "Gemini 3.8 Flash", "default": True},
     {"id": "gemini-2.5-pro", "label": "Gemini 2.5 Pro"},
-    {"id": "gemini-3.1-pro-preview", "label": "Gemini 3.1 Pro Preview"},
+    {"id": "gemini-4-argon", "label": "Gemini 4 Argon"},
 )
 SUPPORTED_VERTEX_MODEL_IDS = frozenset(model["id"] for model in SUPPORTED_VERTEX_MODELS)
 DEFAULT_VERTEX_MODEL = next(model["id"] for model in SUPPORTED_VERTEX_MODELS if model.get("default"))

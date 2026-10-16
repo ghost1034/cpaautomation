@@ -308,7 +308,7 @@ class FormFillService:
 
         project = os.getenv("GOOGLE_CLOUD_PROJECT_ID")
         location = os.getenv("GOOGLE_CLOUD_LOCATION", "global")
-        self.model_name = os.getenv("FORM_FILL_GEMINI_MODEL", "gemini-3.1-pro-preview")
+        self.model_name = os.getenv("FORM_FILL_GEMINI_MODEL", "gemini-4-argon")
         self.max_output_tokens = self._env_int("FORM_FILL_GEMINI_MAX_OUTPUT_TOKENS", 65536)
         self.batch_enabled = os.getenv("FORM_FILL_BATCH_ENABLED", "true").strip().lower() in {"1", "true", "yes", "y"}
         self.batch_max_rounds = self._env_int("FORM_FILL_BATCH_MAX_ROUNDS", 200)
@@ -1416,11 +1416,10 @@ class FormFillService:
             raise ValueError("Gemini returned an unexpected response")
         return payload
 
-    def _generation_config(self, schema: types.Schema, *, temperature: float = 0.1) -> types.GenerateContentConfig:
+    def _generation_config(self, schema: types.Schema) -> types.GenerateContentConfig:
         return types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=schema,
-            temperature=temperature,
             max_output_tokens=self.max_output_tokens,
         )
 
@@ -1627,7 +1626,7 @@ class FormFillService:
             continuation_response = self.client.models.generate_content(
                 model=self.model_name,
                 contents=contents + [continuation_prompt],
-                config=self._generation_config(schema, temperature=0.0),
+                config=self._generation_config(schema),
             )
             new_items, new_warnings, parsed_ok2, text2, parse_exc2 = self._parse_or_salvage_collection(
                 continuation_response,

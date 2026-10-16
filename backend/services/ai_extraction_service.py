@@ -28,18 +28,14 @@ class AIExtractionService:
             except Exception as e:
                 logger.error(f"Failed to initialize Vertex AI client: {e}")
                 self.client = None
-        # Use Gemini 3 Pro for enhanced document processing and accuracy
-        self.base_model_name = 'gemini-3.1-pro-preview'
+        # Gemini 4 Argon ignores sampling parameters, so none are sent.
+        self.base_model_name = 'gemini-4-argon'
 
         # Generation defaults (override via env if desired)
         try:
             self.max_output_tokens = int(os.getenv("GEMINI_MAX_OUTPUT_TOKENS", "65536"))
         except Exception:
             self.max_output_tokens = 65536
-        try:
-            self.temperature = float(os.getenv("GEMINI_TEMPERATURE", "1.0"))
-        except Exception:
-            self.temperature = 1.0
 
         # Batch protocol settings (for very large outputs)
         self.batch_enabled = os.getenv("GEMINI_BATCH_ENABLED", "true").strip().lower() in ("1", "true", "yes", "y")
@@ -59,10 +55,6 @@ class AIExtractionService:
             self.batch_rows_per_call = int(os.getenv("GEMINI_BATCH_ROWS_PER_CALL", "500"))
         except Exception:
             self.batch_rows_per_call = 500
-        try:
-            self.batch_temperature = float(os.getenv("GEMINI_BATCH_TEMPERATURE", "0.0"))
-        except Exception:
-            self.batch_temperature = 0.0
 
     def _part_from_file_data(self, file_data: Dict) -> types.Part:
         mime_type = file_data.get("mime_type") or "application/pdf"
@@ -357,12 +349,10 @@ class AIExtractionService:
         )
 
     def _config_for_continuation(self, response_schema: types.Schema) -> types.GenerateContentConfig:
-        # Use a deterministic temperature for follow-up batch rounds.
         return types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=response_schema,
             max_output_tokens=self.max_output_tokens,
-            temperature=self.batch_temperature,
         )
 
     def _parse_or_salvage_rows(self, resp: Any, n_cols: int) -> Tuple[List[List[Any]], bool, Optional[str], Optional[Exception]]:
@@ -604,7 +594,6 @@ class AIExtractionService:
                 response_mime_type="application/json",
                 response_schema=response_schema,
                 max_output_tokens=self.max_output_tokens,
-                temperature=self.temperature,
             )
 
             # Build user instructions
@@ -740,7 +729,6 @@ Fields:
                 response_mime_type="application/json",
                 response_schema=response_schema,
                 max_output_tokens=self.max_output_tokens,
-                temperature=self.temperature,
             )
 
             # Build file parts and names

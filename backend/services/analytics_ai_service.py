@@ -28,7 +28,12 @@ logger = logging.getLogger(__name__)
 
 # CPA Analytics only (IRS/GAAP research, assistant, variance, reconciliation, etc.).
 # Inkwise, extraction, and form-fill use their own model env vars.
-ANALYTICS_MODEL = os.getenv("ANALYTICS_GEMINI_MODEL", "gemini-3.1-pro-preview")
+ANALYTICS_MODEL = os.getenv("ANALYTICS_GEMINI_MODEL", "gemini-4-argon")
+
+# Gemini 4 Argon counts thinking tokens toward max_output_tokens, rejects
+# thinking_budget with a 400, and ignores temperature/top_p/top_k.
+_MIN_OUTPUT_TOKENS = 32_768
+_LOW_THINKING = types.ThinkingConfig(thinking_level=types.ThinkingLevel.LOW)
 
 
 _client: Optional[genai.Client] = None
@@ -194,20 +199,17 @@ def _serialize_grounding_metadata(resp: Any) -> Optional[Dict[str, Any]]:
 def _structured_json_config(
     *,
     response_schema: types.Schema,
-    temperature: float = 0.1,
-    max_output_tokens: int = 1024,
 ) -> types.GenerateContentConfig:
     """JSON schema config for short analytics LLM responses.
 
-    Gemini 2.5+ models allocate internal thinking tokens from max_output_tokens.
-    A 256-token cap truncates structured JSON to ``{`` and surfaces as a 500.
+    Thinking tokens come out of max_output_tokens, so a small cap truncates
+    structured JSON to ``{`` and surfaces as a 500.
     """
     return types.GenerateContentConfig(
         response_mime_type="application/json",
         response_schema=response_schema,
-        temperature=temperature,
-        max_output_tokens=max_output_tokens,
-        thinking_config=types.ThinkingConfig(thinking_budget=0),
+        max_output_tokens=_MIN_OUTPUT_TOKENS,
+        thinking_config=_LOW_THINKING,
     )
 
 
@@ -283,11 +285,7 @@ Generate passes specifically tailored to the columns provided."""
     resp = await client.aio.models.generate_content(
         model=ANALYTICS_MODEL,
         contents=prompt,
-        config=_structured_json_config(
-            response_schema=response_schema,
-            temperature=0.1,
-            max_output_tokens=4096,
-        ),
+        config=_structured_json_config(response_schema=response_schema),
     )
     text = _get_resp_text(resp)
     parsed = _parse_json_text(text)
@@ -312,11 +310,7 @@ Each rule object must have a "type" matching an element from the availableRules.
     resp = await client.aio.models.generate_content(
         model=ANALYTICS_MODEL,
         contents=prompt,
-        config=_structured_json_config(
-            response_schema=_reconciliation_pass_schema(required_id=True),
-            temperature=0.1,
-            max_output_tokens=2048,
-        ),
+        config=_structured_json_config(response_schema=_reconciliation_pass_schema(required_id=True)),
     )
     text = _get_resp_text(resp)
     parsed = _parse_json_text(text)
@@ -441,7 +435,6 @@ Every unmatched transaction must appear in exactly one of `unmatchedExceptions`.
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=response_schema,
-            temperature=0.1,
         ),
     )
     text = _get_resp_text(resp)
@@ -606,17 +599,6 @@ def _coerce_summary(value: Any) -> str:
     return str(value).strip()
 
 
-def _document_extract_config(response_schema: types.Schema, *, use_thinking_budget_zero: bool) -> types.GenerateContentConfig:
-    kwargs: Dict[str, Any] = {
-        "response_mime_type": "application/json",
-        "response_schema": response_schema,
-        "max_output_tokens": 8192,
-    }
-    if use_thinking_budget_zero:
-        kwargs["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
-    return types.GenerateContentConfig(**kwargs)
-
-
 async def extract_document(
     document_text: str,
     doc_type: str,
@@ -664,25 +646,14 @@ Return a JSON object conforming strictly to the schema provided."""
         required=["summary", "extractedData"],
     )
 
-    last_exc: Optional[Exception] = None
-    resp: Any = None
-    for use_thinking in (True, False):
-        try:
-            resp = await client.aio.models.generate_content(
-                model=ANALYTICS_MODEL,
-                contents=prompt,
-                config=_document_extract_config(response_schema, use_thinking_budget_zero=use_thinking),
-            )
-            break
-        except Exception as exc:
-            last_exc = exc
-            logger.warning(
-                "Document extract Gemini call failed (thinking_zero=%s): %s",
-                use_thinking,
-                exc,
-            )
-    if resp is None:
-        raise RuntimeError(f"Document extraction model call failed: {last_exc}") from last_exc
+    try:
+        resp = await client.aio.models.generate_content(
+            model=ANALYTICS_MODEL,
+            contents=prompt,
+            config=_structured_json_config(response_schema=response_schema),
+        )
+    except Exception as exc:
+        raise RuntimeError(f"Document extraction model call failed: {exc}") from exc
 
     text = _get_resp_text(resp)
     if not text or not text.strip():
@@ -698,7 +669,8 @@ Return a JSON object conforming strictly to the schema provided."""
             contents=prompt + "\n\nRespond with valid JSON only.",
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                max_output_tokens=8192,
+                max_output_tokens=_MIN_OUTPUT_TOKENS,
+                thinking_config=_LOW_THINKING,
             ),
         )
         resp = retry
@@ -855,7 +827,7 @@ Return ONLY a JSON object with the following keys:
     resp = await client.aio.models.generate_content(
         model=ANALYTICS_MODEL,
         contents=prompt,
-        config=_structured_json_config(response_schema=response_schema, max_output_tokens=1024),
+        config=_structured_json_config(response_schema=response_schema),
     )
     text = _get_resp_text(resp)
     parsed = _parse_json_text(text)
@@ -1111,10 +1083,7 @@ async def stream_ai_assistant(
 
     config = types.GenerateContentConfig(
         system_instruction=system_instruction,
-        temperature=0.3,
-        top_p=0.8,
-        top_k=40,
-        max_output_tokens=4096,
+        max_output_tokens=_MIN_OUTPUT_TOKENS,
         safety_settings=_safety_settings_assistant(),
     )
 
@@ -1351,10 +1320,7 @@ async def stream_research(
     system_instruction = _research_system_instruction(bot, output_style, document_context)
     config = types.GenerateContentConfig(
         system_instruction=system_instruction,
-        temperature=0.2,
-        top_p=0.8,
-        top_k=40,
-        max_output_tokens=20000,
+        max_output_tokens=_MIN_OUTPUT_TOKENS,
         tools=[types.Tool(google_search=types.GoogleSearch())],
     )
 
@@ -1436,8 +1402,8 @@ async def generate_session_title(
         model=ANALYTICS_MODEL,
         contents=prompt,
         config=types.GenerateContentConfig(
-            temperature=0.3,
-            max_output_tokens=20,
+            max_output_tokens=_MIN_OUTPUT_TOKENS,
+            thinking_config=_LOW_THINKING,
         ),
     )
     text = (_get_resp_text(resp) or "").strip().strip('"').strip()

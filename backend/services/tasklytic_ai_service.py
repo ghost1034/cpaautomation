@@ -96,14 +96,18 @@ RECENT HISTORY:
 USER REQUEST:
 {prompt}
 """
+    if selected_model == "gemini-4-argon":
+        # Argon ignores sampling parameters and spends output tokens on thinking.
+        sampling: dict[str, Any] = {"max_output_tokens": 32_768}
+    else:
+        sampling = {"temperature": 0.2, "max_output_tokens": 8192}
     response = await get_client().aio.models.generate_content(
         model=selected_model,
         contents=instruction,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=AI_RESPONSE_SCHEMA,
-            temperature=0.2,
-            max_output_tokens=8192,
+            **sampling,
         ),
     )
     usage = _get_usage_counts(response)
