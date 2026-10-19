@@ -21,9 +21,9 @@ export const HOME_VALUES = [
 
 export const HOME_CAPABILITIES = [
   { title: 'Document intelligence.', body: 'Extract, validate, and route information from complex financial and legal documents.', image: 'cap1.png', products: ['Universal Document Analysis', 'Form Fill', 'Prepared by Client'], href: '/features#document-intelligence' },
-  { title: 'Knowledge work.', body: 'Dictate ideas, ground your writing in sources, and move finished documents into signature workflows.', image: 'cap5.png', products: ['Inkwise', 'Speech2Write', 'E-Signature'], href: '/features#knowledge-work' },
+  { title: 'Knowledge work.', body: 'Dictate ideas and ground your writing in sources.', image: 'cap5.png', products: ['Inkwise', 'Speech2Write'], href: '/features#knowledge-work' },
   { title: 'AI analytics.', body: 'Bring structure to reconciliations, reporting, research, and tax decisions.', image: 'cap3.png', products: ['AI Analytics Suite', 'TaxAtlas'], href: '/features#analytics' },
-  { title: 'Practice operations.', body: 'Keep your projects, time, evidence, and professional learning moving.', image: 'cap5.png', products: ['FirmCRM', 'Tasklytic', 'Chrona', 'CPE Tracker'], href: '/features#practice-operations' },
+  { title: 'Practice operations.', body: 'Keep your projects, time, signatures, evidence, and professional learning moving.', image: 'cap5.png', products: ['FirmCRM', 'Tasklytic', 'Chrona', 'E-Signature', 'CPE Tracker'], href: '/features#practice-operations' },
   { title: 'AI digital workers.', body: 'Bring repeatable professional workflows to deployable, purpose-built agents.', image: 'cap1.png', products: ['Claw Series'], href: '/claw' },
 ]
 

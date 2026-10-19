@@ -58,13 +58,13 @@ export const PRODUCT_GROUPS: ProductGroup[] = [
   {
     id: 'knowledge-work',
     name: 'Knowledge work',
-    description: 'Draft, research, sign, and deliver with evidence attached.',
+    description: 'Draft, research, and deliver with evidence attached.',
     number: '02',
   },
   {
     id: 'practice-operations',
     name: 'Practice operations',
-    description: 'Coordinate teams, time, tasks, client requests, and learning.',
+    description: 'Coordinate teams, time, tasks, signatures, client requests, and learning.',
     number: '03',
   },
   {
@@ -164,9 +164,9 @@ export const PRODUCT_CATALOG: ProductCatalogItem[] = [
     name: 'E-Signature',
     description: 'Prepare, send, sign, and verify documents.',
     icon: FileSignature,
-    groupId: 'knowledge-work',
+    groupId: 'practice-operations',
     appHref: '/dashboard/esign',
-    marketingHref: '/features#knowledge-work',
+    marketingHref: '/features#practice-operations',
     routePrefixes: ['/dashboard/esign'],
     accessStrategy: 'available',
   },
