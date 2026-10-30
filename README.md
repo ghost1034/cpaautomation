@@ -592,7 +592,7 @@ Step-by-step GCP setup (high level)
   - Use `./scripts/deploy.sh --backend-only` to build and deploy only the API + task services
   - Use `./scripts/deploy.sh --build-only` to build and push application images without deploying
   - Use `./scripts/deploy.sh --deploy-only` to deploy existing images without rebuilding
-  - Add `--with-taxatlas` to include the TaxAtlas browser image, jobs, seed, schedules, and monitoring (production backend deployments only); routine deploys leave existing TaxAtlas jobs and schedules unchanged
+  - Add `--with-taxatlas` to include the TaxAtlas browser image, jobs, seed, schedules, and monitoring (production backend deployments only); routine production backend deploys only update the backend image on existing TaxAtlas jobs
   - Target flags can be combined with phase flags, for example `./scripts/deploy.sh --frontend-only --deploy-only`
   - Set env vars and secret mounts per service
 6) Tasks and queues

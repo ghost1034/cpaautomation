@@ -274,7 +274,19 @@ def test_standard_deploy_skips_taxatlas(deployment_tools, target, environment):
         "deploy-services.sh", *target, "--skip-build", "--environment", environment,
     )
     assert result.returncode == 0, result.stderr
-    assert not any("taxatlas" in arg.lower() for call in calls for arg in call)
+    image_updates = [c for c in calls if c[1:4] == ["run", "jobs", "update"] and c[4].startswith("taxatlas-")]
+    if target != ("--frontend-only",) and environment == "production":
+        # Keeps jobs off tags that Artifact Registry cleanup will delete.
+        assert {c[4] for c in image_updates} == {
+            "taxatlas-crawl", "taxatlas-crawl-news", "taxatlas-rates-watch",
+            "taxatlas-dispatch", "taxatlas-translate", "taxatlas-seed",
+        }
+        assert all(any(arg.startswith("--image=") and "/backend:" in arg for arg in c) for c in image_updates)
+        assert not any(c[1:4] == ["run", "jobs", "deploy"] and "taxatlas" in c[4] for c in calls)
+        assert not any(c[1:5] == ["run", "jobs", "execute", "taxatlas-seed"] for c in calls)
+        assert not any(c[:3] == ["scheduler", "jobs", "update"] for c in calls)
+    else:
+        assert not any("taxatlas" in arg.lower() for call in calls for arg in call)
     if target != ("--frontend-only",):
         assert any(c[1:4] == ["run", "jobs", "execute"] for c in calls)
 
@@ -338,7 +350,9 @@ def test_main_deploy_forwards_taxatlas_opt_in_to_build_and_deploy(deployment_too
         if with_taxatlas:
             assert "--deploy-only --backend-only --with-taxatlas" in result.stdout
     if not with_taxatlas:
-        assert not any("taxatlas" in arg.lower() for call in calls for arg in call)
+        # Routine deploys may only keep existing jobs on the current backend image.
+        other_calls = [c for c in calls if c[1:4] not in (["run", "jobs", "describe"], ["run", "jobs", "update"])]
+        assert not any("taxatlas" in arg.lower() for call in other_calls for arg in call)
 
 
 @pytest.mark.parametrize("script,options", [

@@ -764,7 +764,14 @@ if [ "$WITH_TAXATLAS" = true ] && [ "$DEPLOY_BACKEND" = true ] && [ "$ENVIRONMEN
     TAXATLAS_BROWSER_IMAGE="${ARTIFACT_REGISTRY_URL}/taxatlas-browser:${IMAGE_TAG}" \
     "$ROOT_DIR/scripts/deploy-taxatlas-jobs.sh"
 elif [ "$DEPLOY_BACKEND" = true ] && [ "$ENVIRONMENT" = production ]; then
-  info "Skipping TaxAtlas jobs, seed, schedules, and monitoring (opt in with --with-taxatlas)"
+  # Jobs left on an old tag stop running once Artifact Registry cleanup deletes it.
+  section "Updating TaxAtlas job images"
+  for taxatlas_job in taxatlas-crawl taxatlas-crawl-news taxatlas-rates-watch taxatlas-dispatch taxatlas-translate taxatlas-seed; do
+    if gcloud run jobs describe "$taxatlas_job" --region="$REGION" >/dev/null 2>&1; then
+      gcloud run jobs update "$taxatlas_job" --image="$BACKEND_IMAGE" --region="$REGION" >/dev/null
+    fi
+  done
+  info "Skipping TaxAtlas browser image, seed, schedules, and monitoring (opt in with --with-taxatlas)"
 fi
 
 if [ "$DEPLOY_BACKEND" = true ] && [ "$HOSTED_CLAW_ENABLED" = true ]; then

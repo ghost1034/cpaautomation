@@ -47,8 +47,10 @@ Local commands:
   (uses local Chrome on macOS or Playwright Chromium installed with `npx playwright install chromium`).
 
 Routine deployments skip TaxAtlas's browser-image build, job deployment, seed,
-schedule updates, and monitoring configuration. Existing jobs and schedules
-continue running unchanged. Opt in with `./scripts/deploy.sh --with-taxatlas`
+schedule updates, and monitoring configuration. Production backend deployments
+do update existing jobs that use the backend image, because Artifact Registry
+cleanup deletes old tags and a job pinned to one stops running. Schedules are
+unchanged. Opt in with `./scripts/deploy.sh --with-taxatlas`
 or `./scripts/deploy-services.sh --with-taxatlas` when releasing TaxAtlas job,
 seed, schedule, or monitoring changes. This builds the browser image and invokes
 `scripts/deploy-taxatlas-jobs.sh` after the shared Alembic migration.
