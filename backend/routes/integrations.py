@@ -438,7 +438,7 @@ async def get_google_picker_token(
 async def get_gmail_attachments(
     query: str = Query(default="has:attachment", description="Gmail search query"),
     mimeTypes: str = Query(default="", description="Comma-separated MIME types to filter"),
-    limit: int = Query(default=50, max=100, description="Maximum number of attachments to return"),
+    limit: int = Query(default=50, le=100, description="Maximum number of attachments to return"),
     db: Session = Depends(get_db),
     current_user_id: str = Depends(get_current_user_id)
 ):

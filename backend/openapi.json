@@ -3451,8 +3451,8 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 100,
               "description": "Maximum number of attachments to return",
-              "max": 100,
               "default": 50,
               "title": "Limit"
             },
