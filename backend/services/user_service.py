@@ -22,6 +22,9 @@ logger = logging.getLogger(__name__)
 _E164_PHONE_NUMBER_RE = re.compile(r"^\+[1-9]\d{1,14}$")
 
 
+PhoneLookup = Callable[[str], Optional[str] | Awaitable[Optional[str]]]
+
+
 class DuplicatePhoneNumberError(Exception):
     """Raised when a verified phone number is already linked to another app user."""
 
@@ -96,18 +99,95 @@ class UserService:
         if "phone_number" in error_message:
             raise DuplicatePhoneNumberError("That phone number is already linked to another account") from error
 
-    async def is_phone_number_available(self, phone_number: str, requesting_uid: Optional[str] = None) -> bool:
-        """A phone is available unless another user holds it; the caller's own row never blocks them."""
+    async def is_phone_number_available(
+        self,
+        phone_number: str,
+        requesting_uid: Optional[str] = None,
+        lookup_verified_phone: Optional[PhoneLookup] = None,
+    ) -> bool:
+        """A phone is available unless another user verifiably holds it.
+
+        The caller's own row never blocks them. When another row holds the number and
+        ``lookup_verified_phone`` is given, that holder's live Firebase phone is checked;
+        a stored number they no longer have is cleared so it stops blocking everyone else.
+        Lookup failures keep the number unavailable rather than guessing.
+        """
         normalized_phone = self.normalize_e164_phone_number(phone_number)
         db = self._get_session()
         try:
             query = db.query(DBUser.id).filter(DBUser.phone_number == normalized_phone)
             if requesting_uid:
                 query = query.filter(DBUser.id != requesting_uid)
-            existing_user = query.first()
-            return existing_user is None
+            holder = query.first()
         except SQLAlchemyError as e:
             logger.error(f"Failed to check phone availability for {normalized_phone}: {e}")
+            raise
+        finally:
+            db.close()
+
+        if holder is None:
+            return True
+        if lookup_verified_phone is None:
+            return False
+
+        holder_id = cast(str, holder.id)
+        try:
+            holder_live_phone = await self._lookup_phone(lookup_verified_phone, holder_id)
+        except Exception as e:
+            logger.warning(f"Could not confirm phone holder {holder_id} in Firebase; treating phone as taken: {e}")
+            return False
+
+        if holder_live_phone == normalized_phone:
+            return False
+
+        logger.info(f"Clearing stale phone for user {holder_id}; Firebase no longer has it verified")
+        return self._clear_stored_phone(holder_id, expected_phone=normalized_phone)
+
+    async def reconcile_phone_number(self, uid: str, lookup_verified_phone: PhoneLookup) -> Optional[UserResponse]:
+        """Make the stored phone match the user's live Firebase phone (set, change, or clear).
+
+        Raises if Firebase can't be read, and DuplicatePhoneNumberError if another account
+        still holds the new number.
+        """
+        live_phone = self._normalize_phone_number(await self._lookup_phone(lookup_verified_phone, uid))
+        user = await self.get_user(uid)
+        if user is None or user.phone_number == live_phone:
+            return user
+        if live_phone is None:
+            self._clear_stored_phone(uid, expected_phone=user.phone_number)
+            return await self.get_user(uid)
+        # Frees the number if a stale row (not a live holder) is what would collide
+        await self.is_phone_number_available(live_phone, requesting_uid=uid, lookup_verified_phone=lookup_verified_phone)
+        return await self.update_user(uid, UserUpdate(phone_number=live_phone))
+
+    @staticmethod
+    async def _lookup_phone(lookup_verified_phone: PhoneLookup, uid: str) -> Optional[str]:
+        phone_number = lookup_verified_phone(uid)
+        if inspect.isawaitable(phone_number):
+            phone_number = await phone_number
+        return UserService._normalize_phone_number(phone_number)
+
+    def _clear_stored_phone(self, uid: str, expected_phone: Optional[str]) -> bool:
+        """Clear a user's stored phone only if it still equals ``expected_phone`` (race-safe)."""
+        db = self._get_session()
+        try:
+            cleared = (
+                db.query(DBUser)
+                .filter(DBUser.id == uid, DBUser.phone_number == expected_phone)
+                .update(
+                    {
+                        DBUser.phone_number: None,
+                        DBUser.phone_verified_at: None,
+                        DBUser.updated_at: datetime.utcnow(),
+                    },
+                    synchronize_session=False,
+                )
+            )
+            db.commit()
+            return cleared > 0
+        except SQLAlchemyError as e:
+            logger.error(f"Failed to clear stale phone for user {uid}: {e}")
+            db.rollback()
             raise
         finally:
             db.close()

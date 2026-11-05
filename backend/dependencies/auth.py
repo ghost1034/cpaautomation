@@ -67,14 +67,23 @@ def get_enrolled_mfa_phone_number(uid: str) -> Optional[str]:
 
     Never raises — logs and returns None on failure so a Firebase outage can't 500 requests.
     """
-    if local_auth_enabled() and uid == "local-developer":
-        return None
     try:
-        init_firebase()
-        record = firebase_auth.get_user(uid)
+        return lookup_verified_phone_number(uid)
     except Exception as e:
         logger.warning(f"Could not fetch Firebase user {uid} for MFA phone: {e}")
         return None
+
+
+def lookup_verified_phone_number(uid: str) -> Optional[str]:
+    """Like get_enrolled_mfa_phone_number, but raises when Firebase can't be read.
+
+    Use this when None must mean "definitely no verified phone" (e.g. before clearing a
+    stored phone), so an outage is never mistaken for an unenrollment.
+    """
+    if local_auth_enabled() and uid == "local-developer":
+        return None
+    init_firebase()
+    record = firebase_auth.get_user(uid)
 
     phone = _normalize_phone_number(record.phone_number)  # phone-auth sign-in users
     if phone:

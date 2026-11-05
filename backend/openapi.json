@@ -224,6 +224,33 @@
         ]
       }
     },
+    "/api/users/me/phone/reconcile": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Reconcile Phone Number",
+        "description": "Sync the stored phone with the caller's live Firebase phone (call after MFA enrollment changes)",
+        "operationId": "reconcile_phone_number_api_users_me_phone_reconcile_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/users/me/welcome-tour-seen": {
       "post": {
         "tags": [

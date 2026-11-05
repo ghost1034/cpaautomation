@@ -31,6 +31,7 @@ import {
   normalizeAuthRedirectPath,
 } from '@/lib/auth-redirect'
 import { isPhoneMfaExemptEmail } from '@/lib/phone-mfa-exempt'
+import { apiClient } from '@/lib/api'
 
 const POST_AUTH_REDIRECT_STORAGE_KEY = 'post-auth-redirect'
 
@@ -310,6 +311,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const refreshedUser = getCurrentAuthUser()
     if (!refreshedUser || !hasEnrolledPhoneMfa(refreshedUser)) {
       throw new Error('Phone sign-in verification is not complete yet.')
+    }
+
+    // Best-effort: keep the stored phone in step with Firebase so a replaced number
+    // doesn't linger and block other accounts. Enrollment itself already succeeded.
+    try {
+      await apiClient.reconcilePhoneNumber()
+    } catch (reconcileError) {
+      console.warn('Failed to reconcile phone number after MFA enrollment', reconcileError)
     }
 
     setPendingEnrollmentPhoneNumber(null)

@@ -10,12 +10,20 @@ import logging
 from services.user_service import DuplicatePhoneNumberError, UserService
 from models.user import PhoneAvailabilityResponse, UserResponse, UserUpdate, UpdateProfileRequest
 # Usage tracking imports will be added when billing is implemented
-from dependencies.auth import get_enrolled_mfa_phone_number, get_optional_uid_without_mfa, verify_firebase_token
+from dependencies.auth import (
+    get_enrolled_mfa_phone_number,
+    get_optional_uid_without_mfa,
+    lookup_verified_phone_number,
+    verify_firebase_token,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 user_service = UserService()
+
+async def _lookup_verified_phone_async(uid: str) -> Optional[str]:
+    return await asyncio.to_thread(lookup_verified_phone_number, uid)
 
 @router.get("/phone-availability", response_model=PhoneAvailabilityResponse)
 async def get_phone_number_availability(
@@ -24,7 +32,11 @@ async def get_phone_number_availability(
 ):
     try:
         return PhoneAvailabilityResponse(
-            available=await user_service.is_phone_number_available(phone_number, requesting_uid=requesting_uid),
+            available=await user_service.is_phone_number_available(
+                phone_number,
+                requesting_uid=requesting_uid,
+                lookup_verified_phone=_lookup_verified_phone_async,
+            ),
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -92,6 +104,23 @@ async def sync_user_profile(
         raise HTTPException(status_code=409, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error syncing user: {str(e)}")
+
+@router.post("/me/phone/reconcile", response_model=UserResponse)
+async def reconcile_phone_number(token_data: dict = Depends(verify_firebase_token)):
+    """Sync the stored phone with the caller's live Firebase phone (call after MFA enrollment changes)"""
+    try:
+        user = await user_service.reconcile_phone_number(token_data["uid"], _lookup_verified_phone_async)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user
+    except HTTPException:
+        raise
+    except DuplicatePhoneNumberError as e:
+        logger.error(f"Verified phone for user {token_data.get('uid')} is already linked to another account")
+        raise HTTPException(status_code=409, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to reconcile phone for user {token_data.get('uid')}: {e}")
+        raise HTTPException(status_code=503, detail="Unable to confirm your phone number right now")
 
 @router.put("/me", response_model=UserResponse)
 async def update_current_user(

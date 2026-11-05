@@ -240,6 +240,10 @@ export class ApiClient {
     return this.request(`/api/users/phone-availability?${searchParams.toString()}`)
   }
 
+  async reconcilePhoneNumber(): Promise<ApiResponse<ApiPaths['/api/users/me/phone/reconcile']['post']>> {
+    return this.request('/api/users/me/phone/reconcile', { method: 'POST' })
+  }
+
   async syncUserProfile(profileData?: { display_name?: string; photo_url?: string }): Promise<ApiResponse<ApiPaths['/api/users/me/sync']['post']>> {
     return this.request('/api/users/me/sync', {
       method: 'POST',

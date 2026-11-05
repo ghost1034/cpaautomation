@@ -56,6 +56,13 @@ class GetEnrolledMfaPhoneNumberTests(unittest.TestCase):
     def test_returns_none_instead_of_raising_on_firebase_error(self) -> None:
         self.assertIsNone(self._get(error=RuntimeError("firebase down")))
 
+    def test_strict_lookup_raises_on_firebase_error(self) -> None:
+        from dependencies import auth
+
+        with patch.object(auth.firebase_auth, "get_user", MagicMock(side_effect=RuntimeError("firebase down"))):
+            with self.assertRaises(RuntimeError):
+                auth.lookup_verified_phone_number("uid-123")
+
 
 class ApplyVerifiedPhoneTests(unittest.TestCase):
     def _service(self) -> UserService:
@@ -210,6 +217,80 @@ class PhoneAvailabilityTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_unused_phone_is_available(self) -> None:
         self.assertTrue(await self.service.is_phone_number_available("+14155550199", requesting_uid="other-uid"))
+
+    def _stored_phone(self, uid: str):
+        from models.db_models import User as DBUser
+
+        db = self._session_factory()
+        try:
+            row = db.query(DBUser).filter(DBUser.id == uid).first()
+            return (row.phone_number, row.phone_verified_at) if row else None
+        finally:
+            db.close()
+
+    async def test_stale_holder_is_cleared_and_phone_becomes_available(self) -> None:
+        lookup = MagicMock(return_value=None)  # holder's MFA was removed in Firebase
+        available = await self.service.is_phone_number_available(
+            "+14155550100", requesting_uid="other-uid", lookup_verified_phone=lookup
+        )
+        self.assertTrue(available)
+        lookup.assert_called_once_with("owner-uid")
+        self.assertEqual(self._stored_phone("owner-uid"), (None, None))
+
+    async def test_holder_with_different_live_phone_is_cleared(self) -> None:
+        lookup = AsyncMock(return_value="+14155550177")
+        self.assertTrue(await self.service.is_phone_number_available("+14155550100", lookup_verified_phone=lookup))
+        self.assertEqual(self._stored_phone("owner-uid"), (None, None))
+
+    async def test_live_holder_keeps_phone(self) -> None:
+        lookup = MagicMock(return_value="+14155550100")
+        self.assertFalse(await self.service.is_phone_number_available(
+            "+14155550100", requesting_uid="other-uid", lookup_verified_phone=lookup
+        ))
+        self.assertEqual(self._stored_phone("owner-uid")[0], "+14155550100")
+
+    async def test_firebase_failure_keeps_phone_taken_and_row_intact(self) -> None:
+        lookup = MagicMock(side_effect=RuntimeError("firebase down"))
+        self.assertFalse(await self.service.is_phone_number_available(
+            "+14155550100", requesting_uid="other-uid", lookup_verified_phone=lookup
+        ))
+        self.assertEqual(self._stored_phone("owner-uid")[0], "+14155550100")
+
+    async def test_lookup_skipped_when_caller_owns_phone(self) -> None:
+        lookup = MagicMock()
+        self.assertTrue(await self.service.is_phone_number_available(
+            "+14155550100", requesting_uid="owner-uid", lookup_verified_phone=lookup
+        ))
+        lookup.assert_not_called()
+
+    async def test_reconcile_clears_phone_when_mfa_removed(self) -> None:
+        user = await self.service.reconcile_phone_number("owner-uid", MagicMock(return_value=None))
+        self.assertIsNone(user.phone_number)
+        self.assertEqual(self._stored_phone("owner-uid"), (None, None))
+
+    async def test_reconcile_switches_to_newly_enrolled_phone(self) -> None:
+        user = await self.service.reconcile_phone_number("owner-uid", MagicMock(return_value="+14155550177"))
+        self.assertEqual(user.phone_number, "+14155550177")
+        self.assertEqual(self._stored_phone("owner-uid")[0], "+14155550177")
+
+    async def test_reconcile_frees_new_phone_from_stale_holder(self) -> None:
+        from models.db_models import User as DBUser
+
+        db = self._session_factory()
+        db.add(DBUser(id="stale-uid", email="stale@example.com", phone_number="+14155550177"))
+        db.commit()
+        db.close()
+        live_phones = {"owner-uid": "+14155550177", "stale-uid": None}
+
+        user = await self.service.reconcile_phone_number("owner-uid", lambda uid: live_phones[uid])
+
+        self.assertEqual(user.phone_number, "+14155550177")
+        self.assertEqual(self._stored_phone("stale-uid"), (None, None))
+
+    async def test_reconcile_propagates_firebase_failure_without_changes(self) -> None:
+        with self.assertRaises(RuntimeError):
+            await self.service.reconcile_phone_number("owner-uid", MagicMock(side_effect=RuntimeError("down")))
+        self.assertEqual(self._stored_phone("owner-uid")[0], "+14155550100")
 
 
 class OptionalUidWithoutMfaTests(unittest.IsolatedAsyncioTestCase):
