@@ -24409,6 +24409,7 @@ export interface operations {
             query?: {
                 page?: number;
                 limit?: number;
+                search?: string | null;
             };
             header?: never;
             path: {

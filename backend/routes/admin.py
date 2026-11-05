@@ -10,7 +10,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from sqlalchemy import String, cast, func, literal, or_, select
+from sqlalchemy import LargeBinary, String, cast, false, func, literal, or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -250,9 +250,30 @@ def _default_order_column(table: Any):
     return primary_key[0] if primary_key else None
 
 
-def _safe_count(db: Session, table: Any) -> int | None:
+def _table_search_clause(table: Any, search: str):
+    """Match ``search`` against every non-redacted, text-castable column.
+
+    Redacted columns are excluded so search cannot be used as an oracle to
+    reveal values the console intentionally hides.
+    """
+    escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    needle = f"%{escaped}%"
+    searchable = [
+        column
+        for column in table.columns
+        if not _is_sensitive(column.name, table.name) and not isinstance(column.type, LargeBinary)
+    ]
+    if not searchable:
+        return false()
+    return or_(*(cast(column, String).ilike(needle, escape="\\") for column in searchable))
+
+
+def _safe_count(db: Session, table: Any, where: Any = None) -> int | None:
     try:
-        return int(db.execute(select(func.count()).select_from(table)).scalar_one())
+        statement = select(func.count()).select_from(table)
+        if where is not None:
+            statement = statement.where(where)
+        return int(db.execute(statement).scalar_one())
     except SQLAlchemyError:
         db.rollback()
         logger.exception("Admin console could not count table %s", table.name)
@@ -738,15 +759,20 @@ async def get_console_table(
     table_name: str,
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=50, ge=1, le=200),
+    search: str | None = Query(default=None, max_length=200),
     db: Session = Depends(get_db),
     _: User = Depends(require_system_admin),
 ):
     table = _table_or_404(table_name)
-    total = _safe_count(db, table)
+    search = search.strip() if search else None
+    where = _table_search_clause(table, search) if search else None
+    total = _safe_count(db, table, where)
     if total is None:
         raise HTTPException(status_code=503, detail="Table is unavailable")
 
     statement = select(table)
+    if where is not None:
+        statement = statement.where(where)
     order_column = _default_order_column(table)
     if order_column is not None:
         statement = statement.order_by(order_column.desc().nullslast())
