@@ -10,7 +10,7 @@ import logging
 from services.user_service import DuplicatePhoneNumberError, UserService
 from models.user import PhoneAvailabilityResponse, UserResponse, UserUpdate, UpdateProfileRequest
 # Usage tracking imports will be added when billing is implemented
-from dependencies.auth import get_enrolled_mfa_phone_number, verify_firebase_token
+from dependencies.auth import get_enrolled_mfa_phone_number, get_optional_uid_without_mfa, verify_firebase_token
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +20,11 @@ user_service = UserService()
 @router.get("/phone-availability", response_model=PhoneAvailabilityResponse)
 async def get_phone_number_availability(
     phone_number: str = Query(..., min_length=2, max_length=32),
+    requesting_uid: Optional[str] = Depends(get_optional_uid_without_mfa),
 ):
     try:
         return PhoneAvailabilityResponse(
-            available=await user_service.is_phone_number_available(phone_number),
+            available=await user_service.is_phone_number_available(phone_number, requesting_uid=requesting_uid),
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

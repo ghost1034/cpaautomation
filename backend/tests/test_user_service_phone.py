@@ -179,5 +179,65 @@ class DuplicatePhoneConflictTests(unittest.IsolatedAsyncioTestCase):
         db.rollback.assert_called_once()
 
 
+class PhoneAvailabilityTests(unittest.IsolatedAsyncioTestCase):
+    """Regression: a user re-enrolling their own recorded phone was told it belonged to another account."""
+
+    def setUp(self) -> None:
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+        from models.db_models import User as DBUser
+
+        engine = create_engine("sqlite://")
+        DBUser.__table__.create(engine)
+        self._session_factory = sessionmaker(bind=engine)
+        db = self._session_factory()
+        db.add(DBUser(id="owner-uid", email="owner@example.com", phone_number="+14155550100"))
+        db.commit()
+        db.close()
+
+        with patch.object(UserService, "__init__", return_value=None):
+            self.service = UserService()
+        self.service._get_session = self._session_factory
+
+    async def test_own_phone_is_available_to_its_owner(self) -> None:
+        self.assertTrue(await self.service.is_phone_number_available("+14155550100", requesting_uid="owner-uid"))
+
+    async def test_phone_held_by_another_user_is_unavailable(self) -> None:
+        self.assertFalse(await self.service.is_phone_number_available("+14155550100", requesting_uid="other-uid"))
+
+    async def test_anonymous_caller_sees_held_phone_as_unavailable(self) -> None:
+        self.assertFalse(await self.service.is_phone_number_available("+14155550100"))
+
+    async def test_unused_phone_is_available(self) -> None:
+        self.assertTrue(await self.service.is_phone_number_available("+14155550199", requesting_uid="other-uid"))
+
+
+class OptionalUidWithoutMfaTests(unittest.IsolatedAsyncioTestCase):
+    def _request(self, authorization: str | None):
+        headers = {"authorization": authorization} if authorization is not None else {}
+        return SimpleNamespace(headers=headers)
+
+    async def _resolve(self, authorization, verify):
+        from dependencies import auth
+
+        with patch.object(auth, "local_auth_enabled", return_value=False), \
+                patch.object(auth, "init_firebase"), \
+                patch.object(auth.firebase_auth, "verify_id_token", verify):
+            return await auth.get_optional_uid_without_mfa(self._request(authorization))
+
+    async def test_returns_uid_for_token_without_second_factor(self) -> None:
+        verify = MagicMock(return_value={"uid": "uid-123", "firebase": {}})
+        self.assertEqual(await self._resolve("Bearer tok", verify), "uid-123")
+
+    async def test_missing_header_is_anonymous(self) -> None:
+        verify = MagicMock()
+        self.assertIsNone(await self._resolve(None, verify))
+        verify.assert_not_called()
+
+    async def test_invalid_token_is_anonymous(self) -> None:
+        verify = MagicMock(side_effect=ValueError("bad token"))
+        self.assertIsNone(await self._resolve("Bearer tok", verify))
+
+
 if __name__ == "__main__":
     unittest.main()

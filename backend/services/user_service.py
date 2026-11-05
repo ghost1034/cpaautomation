@@ -96,11 +96,15 @@ class UserService:
         if "phone_number" in error_message:
             raise DuplicatePhoneNumberError("That phone number is already linked to another account") from error
 
-    async def is_phone_number_available(self, phone_number: str) -> bool:
+    async def is_phone_number_available(self, phone_number: str, requesting_uid: Optional[str] = None) -> bool:
+        """A phone is available unless another user holds it; the caller's own row never blocks them."""
         normalized_phone = self.normalize_e164_phone_number(phone_number)
         db = self._get_session()
         try:
-            existing_user = db.query(DBUser.id).filter(DBUser.phone_number == normalized_phone).first()
+            query = db.query(DBUser.id).filter(DBUser.phone_number == normalized_phone)
+            if requesting_uid:
+                query = query.filter(DBUser.id != requesting_uid)
+            existing_user = query.first()
             return existing_user is None
         except SQLAlchemyError as e:
             logger.error(f"Failed to check phone availability for {normalized_phone}: {e}")

@@ -160,6 +160,30 @@ async def verify_optional_firebase_token(
     credentials = HTTPAuthorizationCredentials(scheme=scheme, credentials=credential.strip())
     return await verify_firebase_token(credentials)
 
+async def get_optional_uid_without_mfa(request: Request) -> Optional[str]:
+    """Best-effort caller identity for pre-MFA flows (e.g. enrolling a phone).
+
+    Skips the phone-MFA requirement because callers are, by definition, not yet
+    enrolled. Any missing or invalid token yields None (anonymous) rather than
+    an error, so only use this where identity merely narrows a result.
+    """
+    authorization = request.headers.get("authorization", "").strip()
+    scheme, separator, credential = authorization.partition(" ")
+    credential = credential.strip()
+    if not separator or scheme.lower() != "bearer" or not credential:
+        return None
+
+    if local_auth_enabled():
+        return "local-developer" if credential == "cpaautomation-local-development" else None
+
+    try:
+        init_firebase()
+        decoded_token = await asyncio.to_thread(firebase_auth.verify_id_token, credential)
+    except Exception as e:
+        logger.info(f"Ignoring unverifiable optional token: {type(e).__name__}")
+        return None
+    return decoded_token.get("uid") or None
+
 async def get_current_user_id(token_data: Dict = Depends(verify_firebase_token)) -> str:
     """
     Extract user ID from verified token
